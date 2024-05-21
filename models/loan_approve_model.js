@@ -2,7 +2,7 @@
 
 const mongoose = require('mongoose');
 
-const UserLeadSchema = new mongoose.Schema({
+const loanApproveModel = new mongoose.Schema({
     // Reference to the parent UserData document
     user: {
         type: mongoose.Schema.Types.ObjectId, // Store the _id of the associated user
@@ -52,10 +52,18 @@ const UserLeadSchema = new mongoose.Schema({
     pincode: { type: String, default: "" },
     createdAt: { type: Date, default: Date.now },
     disbursementDate: { type: String, default : "" },
+    updatedAt: { type: Date, default: Date.now },
 
-    updatedAt: { type: Date, default: Date.now }
+    // more fields as per the table.
+
+    is_emi_generated : {
+        type : Boolean,
+        default : false
+    }
+
+
 });
 
-const UserLead = mongoose.model('UserLead', UserLeadSchema);
+const LoanApproveModel = mongoose.model('LoanApproveModel', loanApproveModel);
 
-module.exports = UserLead;
+module.exports = LoanApproveModel;

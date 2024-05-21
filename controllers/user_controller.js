@@ -5,6 +5,9 @@ const UserLead = require('../models/user_lead_model');
 const UserData = require('../models/user_model');
 const UserVisit = require('../models/user_visit_model');
 const UserAttendance = require('../models/user_attendence_model');
+const uploadMiddleWare = require("../aws/FileUpload");
+const LoanApproveModel = require('../models/loan_approve_model');
+
 
 function makeid(length) {
     let result = '';
@@ -28,6 +31,58 @@ function makeidNumber(length) {
     }
     return result;
 }
+// upload-lead-cibil
+const uploadLeadCibilPdf = async(req,res) => {
+    try{
+        const {leadId} = req.body;
+        const userLead = await UserLead.findById(leadId);
+        if(userLead!=null){
+            const fileLocation = await req.file.location;
+            userLead.cibil_pdf = fileLocation;
+            await userLead.save();
+            res.status(200).json({status : 'success',code : 200,message : "Uploaded Lead PDF Successfully !" });
+
+
+        }else{
+            res.status(200).json({status : 'fail',code : 400,message : "Lead not Found !" });
+
+        }
+
+
+
+    }catch(error){
+        console.error(error);
+        res.status(200).json({ status: 'fail',code : 500,message: "Internal Server Error" });
+    }
+
+
+}
+
+
+
+
+// upload-file
+const uploadFile = async (req,res) => {
+
+    try {
+        console.log(req.file);
+        console.log(req.body);
+
+        const fileLocation = await req.file.location;
+        
+        
+        res.status(200).json({status : 'success', code : 200, message : fileLocation})
+
+
+    }catch(error){
+        
+        console.error(error);
+        res.status(200).json({ error: "Internal Server Error" });
+    }
+}
+
+
+
 //update-mpass
 const updateMpass = async (req, res) => {
     try {
@@ -118,7 +173,7 @@ const getAllUsers = async (req,res) =>{
         if(allUsers.length==0){
             return res.status(200).json({status : 'fail',code : 400,message : 'No users found !'})
         }else {
-            return res.status(200).json({status : 'fail',code : 400,message : 'all-app-users',data : allUsers})
+            return res.status(200).json({status : 'success',code : 200,message : 'all-app-users',data : allUsers})
         }
 
 
@@ -133,6 +188,27 @@ const getAllUsers = async (req,res) =>{
 
 }
 
+// controller function to get-all-approval-loans
+
+const getAllApprovalLoans= async (req,res) => {
+    try{
+        const allLeads = await LoanApproveModel.find();
+        if(allLeads.length==0){
+            res.status(200).json({status : 'fail',code : 200,error : 'No Approved Loans'})
+        }else{
+            res.status(200).json({status : 'success',code : 200,message : 'all-admin-approval-loans',data : allLeads});
+        }
+
+    }catch(error) {
+        console.error(error);
+        if (error instanceof mongoose.Error.CastError) {
+            return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
+        }
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+
+
+}
 
 
 
@@ -143,7 +219,7 @@ const updateLeadStatus = async (req,res) => {
         const {leadId, status, amount,feesAmount, interestRate} = req.body;
 
         const userLead = await UserLead.findById(leadId)
-        if(userLead.length!=0){
+        if(userLead){
             if(status==="APPROVED"){
                 userLead.lead_status = status;
                 userLead.leadAmount = amount;
@@ -151,15 +227,72 @@ const updateLeadStatus = async (req,res) => {
                 userLead.processingFees = feesAmount;
                 userLead.lead_interest_rate = interestRate;
                 userLead.disbursementDate = "";
+                // update the loan_approve_table as well.
+                const newApprovalLoan = new LoanApproveModel({
+                    user: userLead.user,
+                    firstName: userLead.firstName,
+                    lastName: userLead.lastName,
+                    middleName: userLead.middleName,
+                    mobileNumber: userLead.mobileNumber,
+                    dob: userLead.dob,
+                    gender: userLead.gender,
+                    pincode: userLead.pincode,
+                    gs_loan_number: userLead.gs_loan_number,
+                    gs_loan_password: userLead.gs_loan_password,
+                    gs_loan_userid: userLead.gs_loan_userid,
+                    userType: userLead.userType,
+                    monthlySalary: userLead.monthlySalary,
+                    relativeName: userLead.relativeName,
+                    relativeNumber: userLead.relativeNumber,
+                    currentAddress: userLead.currentAddress,
+                    state: userLead.state,
+                    aadhar_front: userLead.aadhar_front,
+                    aadhar_back: userLead.aadhar_back,
+                    pancard: userLead.pancard,
+                    pancard_img: userLead.pancard_img,
+                    aadhar_card: userLead.aadhar_card,
+                    selfie: userLead.selfie,
+                    additional_document: userLead.additional_document,
+                    cibil_pdf: userLead.cibil_pdf,
+                    leadAmount: userLead.leadAmount,
+                    lead_interest_rate: userLead.lead_interest_rate,
+                    processingFees: userLead.processingFees,
+                    feesAmount: userLead.feesAmount,
+                    customerLoanAmount: userLead.customerLoanAmount,
+                    empApproveAmount: userLead.empApproveAmount,
+                
+                    lead_status: status,  
+                
+                    dateOfBirth: userLead.dateOfBirth,
+                    pincode: userLead.pincode,
+                    gender: userLead.gender,
+                
+                    disbursementDate: "",  
+                    is_emi_generated: false, 
+                });
+                
+                await newApprovalLoan.save();
+                
+                userLead.lead_status = status;
+                await userLead.save();
+                res.status(200).json({status : 'success',code : 200,approval_loan_id : newApprovalLoan._id,message : 'Lead updated successfully & Lead is Moved to Approval Table ',data : userLead})
+
+
             }else if(status==="DISBURSED"){
                 userLead.disbursementDate(Date.now());
-            }
-
                 userLead.lead_status = status;
                 await userLead.save();
 
-            res.status(200).json({status : 'success',code : 200,message : 'Lead updated successfully ',data : userLead})
+                res.status(200).json({status : 'success',code : 200,message : 'Lead updated successfully ',data : userLead})
 
+            }else{
+                userLead.lead_status = status;
+                await userLead.save();
+                res.status(200).json({status : 'success',code : 200,message : 'Lead updated successfully ',data : userLead})
+
+            }
+
+                
         }else{
             res.status(200).json({status : 'fail',code : 200,error : 'User Lead Not Found !'})
 
@@ -187,7 +320,7 @@ const getAllLeads = async (req,res) =>{
             res.status(200).json({status : 'success',code : 200,message : 'all-admin-leads',data : allLeads});
         }
 
-    }catch {
+    }catch(error) {
         console.error(error);
         if (error instanceof mongoose.Error.CastError) {
             return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
@@ -195,6 +328,27 @@ const getAllLeads = async (req,res) =>{
         res.status(500).json({ error: "Internal Server Error" });
     }
 
+
+}
+
+// controller function to get-lead-by-id
+const getLeadDetails = async (req,res) => {
+    try{
+
+        const {leadId} = req.body;
+
+        const lead = await UserLead.findById(leadId);
+        if(lead!=null){
+            return res.status(200).json({code : 200,status : 'success', message: "Record Found !",data : lead });
+
+        }else{
+            return res.status(200).json({code : 400,status : 'fail', message: "Lead not found" });
+        }
+
+    }catch (error){
+
+        console.log(error);
+    }
 
 }
 
@@ -209,7 +363,7 @@ const createLead = async (req, res) => {
         // Check if userId is valid
         const user = await UserData.findById(userId);
         if (!user) {
-            return res.status(200).json({code : '200',status : 'fail', error: "User not found" });
+            return res.status(200).json({code : '200',status : 'fail', message: "User not found" });
         }
         const existingLead = await UserLead.find({mobileNumber : mobileNumber,pancard : pancard,aadhar_card : aadhar_card});
         
@@ -218,6 +372,7 @@ const createLead = async (req, res) => {
             return res.status(200).json({code : '200',status : 'fail', error: "Lead Alredy Exists" });
 
         }
+        
 
 
         // Create a new UserLead document
@@ -236,7 +391,7 @@ const createLead = async (req, res) => {
     } catch (error) {
         console.error(error);
         if (error instanceof mongoose.Error.CastError) {
-            return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
+            return res.status(200).json({ status : 'fail',code : 200,message: "Invalid user ID format" });
         }
         res.status(500).json({ error: "Internal Server Error" });
     }
@@ -245,8 +400,8 @@ const createLead = async (req, res) => {
 const deleteVisit = async (req,res) => {
 
     try{
-        const {visitId} = req.body;
-        const userLead = await UserVisit.findByIdAndDelete(visitId);
+        const {visit_Id} = req.body;
+        const userLead = await UserVisit.findByIdAndDelete(visit_Id);
         if(userLead!=null){
             return res.status(200).json({status : 'success',code : 200,message : 'Visit Deleted successfully !'})
         }else{
@@ -256,11 +411,31 @@ const deleteVisit = async (req,res) => {
     }catch(error){
         console.log(error);
         if (error instanceof mongoose.Error.CastError) {
-            return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
+            return res.status(200).json({ status : 'fail',code : 200,message: "Invalid user ID format" });
         }
-        res.status(500).json({ error: "Internal Server Error" });
+        res.status(500).json({ message: "Internal Server Error" });
     }
 }
+const deleteApprovalLoan = async (req,res) => {
+
+    try{
+        const {loan_approval_id} = req.body;
+        const userLead = await LoanApproveModel.findByIdAndDelete(loan_approval_id);
+        if(userLead!=null){
+            return res.status(200).json({status : 'success',code : 200,message : 'Approval Loan Deleted successfully !'})
+        }else{
+            return res.status(200).json({status : 'fail',code : 400,message : 'No Approval Loan found !'})
+        }
+
+    }catch(error){
+        console.log(error);
+        if (error instanceof mongoose.Error.CastError) {
+            return res.status(200).json({ status : 'fail',code : 200,message: "Invalid user ID format" });
+        }
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+
 
 const getAllUserLeads = async (req,res) => {
 
@@ -294,7 +469,7 @@ const getAllUserVisits = async (req,res) => {
     }catch(error){
         console.log(error);
         if (error instanceof mongoose.Error.CastError) {
-            return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
+            return res.status(200).json({ status : 'fail',code : 200,message: "Invalid user ID format" });
         }
         res.status(500).json({ error: "Internal Server Error" });
     }
@@ -304,7 +479,7 @@ const getAllUserVisits = async (req,res) => {
 const getAllVisits = async (req,res) => {
     try{
         const userLead = await UserVisit.find();
-        if(userLead!=null){
+        if(userLead!=null && userLead.length!=0){
             return res.status(200).json({status : 'success',code : 200,message : 'Visit Fetched successfully !',data : userLead})
         }else{
             return res.status(200).json({status : 'fail',code : 400,message : 'No Visit found !'})
@@ -360,7 +535,7 @@ const deleteAttendance = async (req,res) => {
         if(userLead!=null){
             return res.status(200).json({status : 'success',code : 200,message : 'Attendance Deleted successfully !'})
         }else{
-            return res.status(200).json({status : 'fail',code : 400,message : 'No Visit found !'})
+            return res.status(200).json({status : 'fail',code : 400,message : 'No Attendance found !'})
         }
 
     }catch(error){
@@ -541,7 +716,13 @@ module.exports = { registerUser,loginUser,updateMpass,createLead,getAllLeads,upd
     getAllVisits,
     getUserAttendance,
     createAttendance,
-    deleteAttendance
-    ,getAllUserVisits,
+    uploadFile,
+    getAllApprovalLoans,
+    deleteApprovalLoan,
+    deleteAttendance,
+    uploadLeadCibilPdf,
+    getLeadDetails,
+
+    getAllUserVisits,
     getAllAttendance,
     createVisit,deleteVisit };

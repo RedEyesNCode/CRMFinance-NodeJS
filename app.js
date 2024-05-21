@@ -8,8 +8,10 @@ const cors = require("cors"); // Import the cors middleware
 var app = express();
 
 // view engine setup
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "ejs");
+// app.set("views", path.join(__dirname, "views"));
+// app.set("view engine", "ejs");
+app.set('view engine', 'ejs'); // Replace 'pug' with your engine
+app.set('views', path.join(__dirname, 'views')); // Set views directory
 app.use(cors());
 app.use(logger("dev"));
 app.use(express.json());
@@ -22,6 +24,7 @@ var user = require("./controllers/user_controller");
 app.use(express.json());
 const { registerUser,loginUser,updateMpass,createLead,getAllUserLeads,getAllUserVisits,updateLeadStatus,getAllLeads,getAllUsers,deleteLead,deleteUser,deleteVisit } = require('./controllers/user_controller');
 const { create } = require("./models/user_model");
+const uploadMiddleWare = require("./aws/FileUpload");
 
 // routes
 app.post('/create-user', registerUser);
@@ -30,9 +33,14 @@ app.post('/update-mpass',updateMpass);
 app.post('/create-lead',createLead);
 app.post('/create-visit',user.createVisit)
 app.post('/update-lead-status',updateLeadStatus);
-app.get('/get-all-leads',getAllLeads)
+app.get('/get-all-leads',getAllLeads);
+app.post('/get-lead-details',user.getLeadDetails);
+
 app.get('/get-all-users',getAllUsers);
 app.get('/get-all-visits',user.getAllVisits);
+app.get('/get-all-approval-loans',user.getAllApprovalLoans);
+app.post('/delete-approval-loan',user.deleteApprovalLoan);
+
 app.post('/delete-user',deleteUser);
 app.post('/delete-visit',deleteVisit);
 app.post('/delete-lead',deleteLead);
@@ -42,6 +50,8 @@ app.post('/create-attendance',user.createAttendance);
 app.post('/delete-attendance',user.deleteAttendance);
 app.post('/get-user-attendance',user.getUserAttendance);
 app.get('/get-all-attendance',user.getAllAttendance);
+app.post('/upload-file',uploadMiddleWare.single('file'),user.uploadFile);
+app.post('/upload-lead-pdf',uploadMiddleWare.single('cibil_pdf'),user.uploadLeadCibilPdf);
 
 
 
