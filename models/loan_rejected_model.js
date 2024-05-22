@@ -60,14 +60,17 @@ const loanApproveModel = new mongoose.Schema({
         type : Boolean,
         default : false
     },
+    is_disbursement_done : {
+        type : Boolean,
+        default : false
+    },
     employee_lead_id_linker : {
         type:String,
-        default : 'Not Present'
+        default : 'LEAD-ID-FROM-EMP-APP'
     }
-
 
 });
 
-const LoanApproveModel = mongoose.model('LoanApproveModel', loanApproveModel);
+const LoanRejectedModel = mongoose.model('LoanRejectedModel', loanApproveModel);
 
-module.exports = LoanApproveModel;
+module.exports = LoanRejectedModel;

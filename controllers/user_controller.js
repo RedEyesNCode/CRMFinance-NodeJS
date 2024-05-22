@@ -7,6 +7,9 @@ const UserVisit = require('../models/user_visit_model');
 const UserAttendance = require('../models/user_attendence_model');
 const uploadMiddleWare = require("../aws/FileUpload");
 const LoanApproveModel = require('../models/loan_approve_model');
+const LoanDisburseModel = require('../models/loan_disburse_model');
+const LoanOngoingModel = require('../models/loan_ongoing_model');
+const LoanRejectedModel = require('../models/loan_rejected_model');
 
 
 function makeid(length) {
@@ -188,13 +191,33 @@ const getAllUsers = async (req,res) =>{
 
 }
 
+const getAllDisburmentLoans= async (req,res) => {
+    try{
+        const allLeads = await LoanDisburseModel.find();
+        if(allLeads.length==0){
+            res.status(200).json({status : 'fail',code : 400,message : 'No Disbursed Loans'})
+        }else{
+            res.status(200).json({status : 'success',code : 200,message : 'all-admin-disburments-loans',data : allLeads});
+        }
+
+    }catch(error) {
+        console.error(error);
+        if (error instanceof mongoose.Error.CastError) {
+            return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
+        }
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+
+
+}
+
 // controller function to get-all-approval-loans
 
 const getAllApprovalLoans= async (req,res) => {
     try{
         const allLeads = await LoanApproveModel.find();
         if(allLeads.length==0){
-            res.status(200).json({status : 'fail',code : 200,error : 'No Approved Loans'})
+            res.status(200).json({status : 'fail',code : 400,message : 'No Approved Loans'})
         }else{
             res.status(200).json({status : 'success',code : 200,message : 'all-admin-approval-loans',data : allLeads});
         }
@@ -210,6 +233,225 @@ const getAllApprovalLoans= async (req,res) => {
 
 }
 
+const deleteDisbursalLoan= async (req,res) => {
+    try{
+        const {disbursal_loan_id} = req.body;
+        const user = await LoanDisburseModel.findByIdAndDelete(disbursal_loan_id);
+        if(user!=null){
+
+            return res.status(200).json({status : 'success',code : 200,message : 'Deleted Disbursal Loan successfully !'})
+        }else{
+            return res.status(200).json({status : 'fail',code : 400,message : 'No disbursal loan found !'})
+
+        }
+
+
+    }catch(error){
+        console.log(error);
+        if (error instanceof mongoose.Error.CastError) {
+            return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
+        }
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+
+
+}
+
+const updateDisbursalLoanStatus = async (req,res) => {
+
+    try{
+        const {disbursal_loan_id, status, amount,feesAmount, interestRate} = req.body;
+
+        const userLead = await LoanDisburseModel.findById(disbursal_loan_id)
+        if(userLead){
+            if(status==="ONGOING"){
+                userLead.lead_status = status;
+                userLead.leadAmount = amount;
+                userLead.feesAmount = feesAmount;
+                userLead.processingFees = feesAmount;
+                userLead.lead_interest_rate = interestRate;
+                userLead.disbursementDate = "";
+                // update the loan_approve_table as well.
+                
+                
+                userLead.lead_status = status;
+                await userLead.save();
+                const newApprovalLoan = new LoanOngoingModel({
+                    user: userLead.user,
+                    employee_lead_id_linker : userLead._id,
+                    
+                    firstName: userLead.firstName,
+                    lastName: userLead.lastName,
+                    middleName: userLead.middleName,
+                    mobileNumber: userLead.mobileNumber,
+                    dob: userLead.dob,
+                    gender: userLead.gender,
+                    pincode: userLead.pincode,
+                    gs_loan_number: userLead.gs_loan_number,
+                    gs_loan_password: userLead.gs_loan_password,
+                    gs_loan_userid: userLead.gs_loan_userid,
+                    userType: userLead.userType,
+                    monthlySalary: userLead.monthlySalary,
+                    relativeName: userLead.relativeName,
+                    relativeNumber: userLead.relativeNumber,
+                    currentAddress: userLead.currentAddress,
+                    state: userLead.state,
+                    aadhar_front: userLead.aadhar_front,
+                    aadhar_back: userLead.aadhar_back,
+                    pancard: userLead.pancard,
+                    pancard_img: userLead.pancard_img,
+                    aadhar_card: userLead.aadhar_card,
+                    selfie: userLead.selfie,
+                    additional_document: userLead.additional_document,
+                    cibil_pdf: userLead.cibil_pdf,
+                    leadAmount: userLead.leadAmount,
+                    lead_interest_rate: userLead.lead_interest_rate,
+                    processingFees: userLead.processingFees,
+                    feesAmount: userLead.feesAmount,
+                    customerLoanAmount: userLead.customerLoanAmount,
+                    empApproveAmount: userLead.empApproveAmount,
+                
+                    lead_status: status,  
+                
+                    dateOfBirth: userLead.dateOfBirth,
+                    pincode: userLead.pincode,
+                    gender: userLead.gender,
+                
+                    disbursementDate: Date.now(),  
+                    is_emi_generated: false, 
+                });
+                
+                await newApprovalLoan.save();
+                res.status(200).json({status : 'success',code : 200,ongoing_loan_id : newApprovalLoan._id,message : 'Lead updated successfully & Lead is Moved to Approval Table ',data : userLead})
+
+
+            }else if(status==="DISBURSED"){
+                userLead.lead_status = status;
+                await userLead.save();
+
+                res.status(200).json({status : 'success',code : 200,message : 'Loan Approval Table updated successfully ',data : userLead})
+
+            }else{
+                userLead.lead_status = status;
+                await userLead.save();
+                res.status(200).json({status : 'success',code : 200,message : 'Loan Approval Table updated successfully ',data : userLead})
+
+            }
+
+                
+        }else{
+            res.status(200).json({status : 'fail',code : 200,error : 'Loan Approval Record Not Found !'})
+
+        }
+
+    }catch (error){
+        console.log(error);
+        if (error instanceof mongoose.Error.CastError) {
+            return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
+        }
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+
+}
+
+
+// controller function to update-loan-approval
+const updateLoanApprovalStatus = async (req,res) => {
+
+    try{
+        const {loan_approval_id, status, amount,feesAmount, interestRate} = req.body;
+
+        const userLead = await LoanApproveModel.findById(loan_approval_id)
+        if(userLead){
+            if(status==="DISBURSED"){
+                userLead.lead_status = status;
+                userLead.leadAmount = amount;
+                userLead.feesAmount = feesAmount;
+                userLead.processingFees = feesAmount;
+                userLead.lead_interest_rate = interestRate;
+                userLead.disbursementDate = "";
+                // update the loan_approve_table as well.
+                
+                
+                userLead.lead_status = status;
+                await userLead.save();
+                const newApprovalLoan = new LoanDisburseModel({
+                    user: userLead.user,
+                    employee_lead_id_linker : userLead._id,
+                    
+                    firstName: userLead.firstName,
+                    lastName: userLead.lastName,
+                    middleName: userLead.middleName,
+                    mobileNumber: userLead.mobileNumber,
+                    dob: userLead.dob,
+                    gender: userLead.gender,
+                    pincode: userLead.pincode,
+                    gs_loan_number: userLead.gs_loan_number,
+                    gs_loan_password: userLead.gs_loan_password,
+                    gs_loan_userid: userLead.gs_loan_userid,
+                    userType: userLead.userType,
+                    monthlySalary: userLead.monthlySalary,
+                    relativeName: userLead.relativeName,
+                    relativeNumber: userLead.relativeNumber,
+                    currentAddress: userLead.currentAddress,
+                    state: userLead.state,
+                    aadhar_front: userLead.aadhar_front,
+                    aadhar_back: userLead.aadhar_back,
+                    pancard: userLead.pancard,
+                    pancard_img: userLead.pancard_img,
+                    aadhar_card: userLead.aadhar_card,
+                    selfie: userLead.selfie,
+                    additional_document: userLead.additional_document,
+                    cibil_pdf: userLead.cibil_pdf,
+                    leadAmount: userLead.leadAmount,
+                    lead_interest_rate: userLead.lead_interest_rate,
+                    processingFees: userLead.processingFees,
+                    feesAmount: userLead.feesAmount,
+                    customerLoanAmount: userLead.customerLoanAmount,
+                    empApproveAmount: userLead.empApproveAmount,
+                
+                    lead_status: status,  
+                
+                    dateOfBirth: userLead.dateOfBirth,
+                    pincode: userLead.pincode,
+                    gender: userLead.gender,
+                
+                    disbursementDate: Date.now(),  
+                    is_emi_generated: false, 
+                });
+                
+                await newApprovalLoan.save();
+                res.status(200).json({status : 'success',code : 200,approval_loan_id : newApprovalLoan._id,message : 'Lead updated successfully & Lead is Moved to Approval Table ',data : userLead})
+
+
+            }else if(status==="DISBURSED"){
+                userLead.lead_status = status;
+                await userLead.save();
+
+                res.status(200).json({status : 'success',code : 200,message : 'Loan Approval Table updated successfully ',data : userLead})
+
+            }else{
+                userLead.lead_status = status;
+                await userLead.save();
+                res.status(200).json({status : 'success',code : 200,message : 'Loan Approval Table updated successfully ',data : userLead})
+
+            }
+
+                
+        }else{
+            res.status(200).json({status : 'fail',code : 200,error : 'Loan Approval Record Not Found !'})
+
+        }
+
+    }catch (error){
+        console.log(error);
+        if (error instanceof mongoose.Error.CastError) {
+            return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
+        }
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+
+}
 
 
 // controller function to update-lead
@@ -228,8 +470,14 @@ const updateLeadStatus = async (req,res) => {
                 userLead.lead_interest_rate = interestRate;
                 userLead.disbursementDate = "";
                 // update the loan_approve_table as well.
+                
+                
+                userLead.lead_status = status;
+                await userLead.save();
                 const newApprovalLoan = new LoanApproveModel({
                     user: userLead.user,
+                    employee_lead_id_linker : userLead._id,
+
                     firstName: userLead.firstName,
                     lastName: userLead.lastName,
                     middleName: userLead.middleName,
@@ -272,9 +520,6 @@ const updateLeadStatus = async (req,res) => {
                 });
                 
                 await newApprovalLoan.save();
-                
-                userLead.lead_status = status;
-                await userLead.save();
                 res.status(200).json({status : 'success',code : 200,approval_loan_id : newApprovalLoan._id,message : 'Lead updated successfully & Lead is Moved to Approval Table ',data : userLead})
 
 
@@ -330,6 +575,25 @@ const getAllLeads = async (req,res) =>{
 
 
 }
+const getDisbursalLoanDetail = async (req,res) => {
+    try{
+
+        const {disbursal_loan_id} = req.body;
+
+        const lead = await LoanDisburseModel.findById(disbursal_loan_id);
+        if(lead!=null){
+            return res.status(200).json({code : 200,status : 'success', message: "Record Found !",data : lead });
+
+        }else{
+            return res.status(200).json({code : 400,status : 'fail', message: "Disbursal Loan Not Found not found" });
+        }
+
+    }catch (error){
+
+        console.log(error);
+    }
+
+}
 
 // controller function to get-lead-by-id
 const getLeadDetails = async (req,res) => {
@@ -352,7 +616,25 @@ const getLeadDetails = async (req,res) => {
 
 }
 
+const getLoanApprovalDetails = async (req,res) => {
+    try{
 
+        const {loan_approval_id} = req.body;
+
+        const lead = await LoanApproveModel.findById(loan_approval_id);
+        if(lead!=null){
+            return res.status(200).json({code : 200,status : 'success', message: "Record Found !",data : lead });
+
+        }else{
+            return res.status(200).json({code : 400,status : 'fail', message: "Loan Approval not found" });
+        }
+
+    }catch (error){
+
+        console.log(error);
+    }
+
+}
 
 // controller function to create-lead
 
@@ -496,6 +778,45 @@ const getAllVisits = async (req,res) => {
 
 }
 
+const getAllOnGoingLoans = async (req,res) => {
+    try{
+        const userLead = await LoanOngoingModel.find();
+        if(userLead!=null && userLead.length!=0){
+            return res.status(200).json({status : 'success',code : 200,message : 'On-going Loans fetched successfully !',data : userLead})
+        }else{
+            return res.status(200).json({status : 'fail',code : 400,message : 'No On-Going Loans found !'})
+        }
+
+    }catch(error){
+        console.log(error);
+        if (error instanceof mongoose.Error.CastError) {
+            return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
+        }
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+
+
+}
+const getAllRejectedLoans = async (req,res) => {
+    try{
+        const userLead = await LoanRejectedModel.find();
+        if(userLead!=null && userLead.length!=0){
+            return res.status(200).json({status : 'success',code : 200,message : 'Rejected Loans fetched successfully !',data : userLead})
+        }else{
+            return res.status(200).json({status : 'fail',code : 400,message : 'No Rejected Loans found !'})
+        }
+
+    }catch(error){
+        console.log(error);
+        if (error instanceof mongoose.Error.CastError) {
+            return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
+        }
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+
+
+}
+
 
 
 // controller function to get-user-attendance.
@@ -547,6 +868,48 @@ const deleteAttendance = async (req,res) => {
     }
 
 }
+
+const deleteRejectedLoan = async (req,res) => {
+
+    try{
+        const {rejected_loan_id} = req.body;
+        const userLead = await LoanRejectedModel.findByIdAndDelete(rejected_loan_id);
+        if(userLead!=null){
+            return res.status(200).json({status : 'success',code : 200,message : 'Loan Rejected Deleted successfully !'})
+        }else{
+            return res.status(200).json({status : 'fail',code : 400,message : 'No Rejected Loan found !'})
+        }
+
+    }catch(error){
+        console.log(error);
+        if (error instanceof mongoose.Error.CastError) {
+            return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
+        }
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+
+}
+const deleteOnGoingLoan = async (req,res) => {
+
+    try{
+        const {rejected_loan_id} = req.body;
+        const userLead = await LoanOngoingModel.findByIdAndDelete(rejected_loan_id);
+        if(userLead!=null){
+            return res.status(200).json({status : 'success',code : 200,message : 'Loan On-going Deleted successfully !'})
+        }else{
+            return res.status(200).json({status : 'fail',code : 400,message : 'No On-going Loan found !'})
+        }
+
+    }catch(error){
+        console.log(error);
+        if (error instanceof mongoose.Error.CastError) {
+            return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
+        }
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+
+}
+
 
 // controller function to get-all-attendance.
 const getAllAttendance = async(req,res) => {
@@ -716,12 +1079,28 @@ module.exports = { registerUser,loginUser,updateMpass,createLead,getAllLeads,upd
     getAllVisits,
     getUserAttendance,
     createAttendance,
+    updateLoanApprovalStatus,
+    updateDisbursalLoanStatus,
+
+    getAllDisburmentLoans,
+    getAllOnGoingLoans,
+    
+    deleteDisbursalLoan,
+    getDisbursalLoanDetail,
+    deleteOnGoingLoan,
+    deleteRejectedLoan,
+
+
+
+
     uploadFile,
     getAllApprovalLoans,
     deleteApprovalLoan,
     deleteAttendance,
     uploadLeadCibilPdf,
     getLeadDetails,
+    getLoanApprovalDetails,
+
 
     getAllUserVisits,
     getAllAttendance,

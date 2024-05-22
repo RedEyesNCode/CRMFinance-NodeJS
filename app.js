@@ -38,8 +38,7 @@ app.post('/get-lead-details',user.getLeadDetails);
 
 app.get('/get-all-users',getAllUsers);
 app.get('/get-all-visits',user.getAllVisits);
-app.get('/get-all-approval-loans',user.getAllApprovalLoans);
-app.post('/delete-approval-loan',user.deleteApprovalLoan);
+
 
 app.post('/delete-user',deleteUser);
 app.post('/delete-visit',deleteVisit);
@@ -52,6 +51,22 @@ app.post('/get-user-attendance',user.getUserAttendance);
 app.get('/get-all-attendance',user.getAllAttendance);
 app.post('/upload-file',uploadMiddleWare.single('file'),user.uploadFile);
 app.post('/upload-lead-pdf',uploadMiddleWare.single('cibil_pdf'),user.uploadLeadCibilPdf);
+
+// extra modules & tables.
+app.get('/get-all-approval-loans',user.getAllApprovalLoans);
+app.post('/delete-approval-loan',user.deleteApprovalLoan);
+app.post('/update-approval-loan-status',user.updateLoanApprovalStatus);
+app.post('/get-approval-loan-detail',user.getLoanApprovalDetails);
+
+app.get('/get-all-disburse-loans',user.getAllDisburmentLoans);
+app.post('/get-disbursal-loan-detail',user.getDisbursalLoanDetail);
+app.post('/delete-disbursal-loan',user.deleteDisbursalLoan);
+app.post('/update-disbursal-loan-status',user.updateDisbursalLoanStatus);
+
+
+app.post('/delete-ongoing-loan',user.deleteOnGoingLoan);
+app.get('/get-all-ongoing-loans',user.getAllOnGoingLoans);
+
 
 
 
