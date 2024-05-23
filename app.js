@@ -66,6 +66,14 @@ app.post('/update-disbursal-loan-status',user.updateDisbursalLoanStatus);
 
 app.post('/delete-ongoing-loan',user.deleteOnGoingLoan);
 app.get('/get-all-ongoing-loans',user.getAllOnGoingLoans);
+ 
+
+//rejected-loans
+app.get('/get-all-rejected-loans',user.getAllRejectedLoans);
+app.post('/delete-rejected-loan',user.deleteRejectedLoan);
+app.post('/get-reject-detail',user.getRejectedDetails);
+
+
 
 
 

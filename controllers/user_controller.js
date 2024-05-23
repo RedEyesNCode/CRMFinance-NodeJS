@@ -370,11 +370,6 @@ const updateLoanApprovalStatus = async (req,res) => {
                 userLead.processingFees = feesAmount;
                 userLead.lead_interest_rate = interestRate;
                 userLead.disbursementDate = "";
-                // update the loan_approve_table as well.
-                
-                
-                userLead.lead_status = status;
-                await userLead.save();
                 const newApprovalLoan = new LoanDisburseModel({
                     user: userLead.user,
                     employee_lead_id_linker : userLead._id,
@@ -419,14 +414,112 @@ const updateLoanApprovalStatus = async (req,res) => {
                     disbursementDate: Date.now(),  
                     is_emi_generated: false, 
                 });
+
                 
                 await newApprovalLoan.save();
+
+                const newOngoingLoan = new LoanOngoingModel({
+                    user: userLead.user,
+                    employee_lead_id_linker : userLead._id,
+                    
+                    firstName: userLead.firstName,
+                    lastName: userLead.lastName,
+                    middleName: userLead.middleName,
+                    mobileNumber: userLead.mobileNumber,
+                    dob: userLead.dob,
+                    gender: userLead.gender,
+                    pincode: userLead.pincode,
+                    gs_loan_number: userLead.gs_loan_number,
+                    gs_loan_password: userLead.gs_loan_password,
+                    gs_loan_userid: userLead.gs_loan_userid,
+                    userType: userLead.userType,
+                    monthlySalary: userLead.monthlySalary,
+                    relativeName: userLead.relativeName,
+                    relativeNumber: userLead.relativeNumber,
+                    currentAddress: userLead.currentAddress,
+                    state: userLead.state,
+                    aadhar_front: userLead.aadhar_front,
+                    aadhar_back: userLead.aadhar_back,
+                    pancard: userLead.pancard,
+                    pancard_img: userLead.pancard_img,
+                    aadhar_card: userLead.aadhar_card,
+                    selfie: userLead.selfie,
+                    additional_document: userLead.additional_document,
+                    cibil_pdf: userLead.cibil_pdf,
+                    leadAmount: userLead.leadAmount,
+                    lead_interest_rate: userLead.lead_interest_rate,
+                    processingFees: userLead.processingFees,
+                    feesAmount: userLead.feesAmount,
+                    customerLoanAmount: userLead.customerLoanAmount,
+                    empApproveAmount: userLead.empApproveAmount,
+                
+                    lead_status: status,  
+                
+                    dateOfBirth: userLead.dateOfBirth,
+                    pincode: userLead.pincode,
+                    gender: userLead.gender,
+                
+                    disbursementDate: Date.now(),  
+                    is_emi_generated: false, 
+                });
+                await newOngoingLoan.save();
+
                 res.status(200).json({status : 'success',code : 200,approval_loan_id : newApprovalLoan._id,message : 'Lead updated successfully & Lead is Moved to Approval Table ',data : userLead})
 
 
-            }else if(status==="DISBURSED"){
+            }else if(status==="REJECTED"){
                 userLead.lead_status = status;
-                await userLead.save();
+                userLead.leadAmount = amount;
+                userLead.feesAmount = feesAmount;
+                userLead.processingFees = feesAmount;
+                userLead.lead_interest_rate = interestRate;
+                userLead.disbursementDate = "";
+               
+                const newOngoingLoan = new LoanRejectedModel({
+                    user: userLead.user,
+                    employee_lead_id_linker : userLead._id,
+                    
+                    firstName: userLead.firstName,
+                    lastName: userLead.lastName,
+                    middleName: userLead.middleName,
+                    mobileNumber: userLead.mobileNumber,
+                    dob: userLead.dob,
+                    gender: userLead.gender,
+                    pincode: userLead.pincode,
+                    gs_loan_number: userLead.gs_loan_number,
+                    gs_loan_password: userLead.gs_loan_password,
+                    gs_loan_userid: userLead.gs_loan_userid,
+                    userType: userLead.userType,
+                    monthlySalary: userLead.monthlySalary,
+                    relativeName: userLead.relativeName,
+                    relativeNumber: userLead.relativeNumber,
+                    currentAddress: userLead.currentAddress,
+                    state: userLead.state,
+                    aadhar_front: userLead.aadhar_front,
+                    aadhar_back: userLead.aadhar_back,
+                    pancard: userLead.pancard,
+                    pancard_img: userLead.pancard_img,
+                    aadhar_card: userLead.aadhar_card,
+                    selfie: userLead.selfie,
+                    additional_document: userLead.additional_document,
+                    cibil_pdf: userLead.cibil_pdf,
+                    leadAmount: userLead.leadAmount,
+                    lead_interest_rate: userLead.lead_interest_rate,
+                    processingFees: userLead.processingFees,
+                    feesAmount: userLead.feesAmount,
+                    customerLoanAmount: userLead.customerLoanAmount,
+                    empApproveAmount: userLead.empApproveAmount,
+                
+                    lead_status: status,  
+                
+                    dateOfBirth: userLead.dateOfBirth,
+                    pincode: userLead.pincode,
+                    gender: userLead.gender,
+                
+                    disbursementDate: Date.now(),  
+                    is_emi_generated: false, 
+                });
+                await newOngoingLoan.save();
 
                 res.status(200).json({status : 'success',code : 200,message : 'Loan Approval Table updated successfully ',data : userLead})
 
@@ -595,6 +688,27 @@ const getDisbursalLoanDetail = async (req,res) => {
 
 }
 
+const getRejectedDetails = async (req,res) => {
+    try{
+
+        const {rejected_loan_id} = req.body;
+
+        const lead = await LoanRejectedModel.findById(rejected_loan_id);
+        if(lead!=null){
+            return res.status(200).json({code : 200,status : 'success', message: "Record Found !",data : lead });
+
+        }else{
+            return res.status(200).json({code : 400,status : 'fail', message: "Lead not found" });
+        }
+
+    }catch (error){
+
+        console.log(error);
+    }
+
+}
+
+
 // controller function to get-lead-by-id
 const getLeadDetails = async (req,res) => {
     try{
@@ -640,7 +754,9 @@ const getLoanApprovalDetails = async (req,res) => {
 
 const createLead = async (req, res) => {
     try {
-        const {leadData, userId,mobileNumber,pancard,aadhar_card} = req.body;  // Get lead data from the request body
+
+        const {userId,mobileNumber,pancard,aadhar_card} = req.body;  // Get lead data from the request body
+        console.log(req.body);
 
         // Check if userId is valid
         const user = await UserData.findById(userId);
@@ -664,7 +780,7 @@ const createLead = async (req, res) => {
         // Save the lead to the database
         const savedLead = await newLead.save();
 
-        res.status(201).json({
+        return res.status(201).json({
             status: "200",
             code: 200,
             message: "Lead created successfully!",
@@ -777,6 +893,8 @@ const getAllVisits = async (req,res) => {
 
 
 }
+
+
 
 const getAllOnGoingLoans = async (req,res) => {
     try{
@@ -892,8 +1010,8 @@ const deleteRejectedLoan = async (req,res) => {
 const deleteOnGoingLoan = async (req,res) => {
 
     try{
-        const {rejected_loan_id} = req.body;
-        const userLead = await LoanOngoingModel.findByIdAndDelete(rejected_loan_id);
+        const {ongoing_loan_id} = req.body;
+        const userLead = await LoanOngoingModel.findByIdAndDelete(ongoing_loan_id);
         if(userLead!=null){
             return res.status(200).json({status : 'success',code : 200,message : 'Loan On-going Deleted successfully !'})
         }else{
@@ -909,7 +1027,6 @@ const deleteOnGoingLoan = async (req,res) => {
     }
 
 }
-
 
 // controller function to get-all-attendance.
 const getAllAttendance = async(req,res) => {
@@ -1090,7 +1207,7 @@ module.exports = { registerUser,loginUser,updateMpass,createLead,getAllLeads,upd
     deleteOnGoingLoan,
     deleteRejectedLoan,
 
-
+    getAllRejectedLoans,
 
 
     uploadFile,
@@ -1099,6 +1216,8 @@ module.exports = { registerUser,loginUser,updateMpass,createLead,getAllLeads,upd
     deleteAttendance,
     uploadLeadCibilPdf,
     getLeadDetails,
+    getRejectedDetails,
+
     getLoanApprovalDetails,
 
 
