@@ -464,6 +464,9 @@ const updateLoanApprovalStatus = async (req,res) => {
                 });
                 await newOngoingLoan.save();
 
+                userLead.lead_status = status;
+                await userLead.save();
+
                 res.status(200).json({status : 'success',code : 200,approval_loan_id : newApprovalLoan._id,message : 'Lead updated successfully & Lead is Moved to Approval Table ',data : userLead})
 
 
@@ -520,6 +523,8 @@ const updateLoanApprovalStatus = async (req,res) => {
                     is_emi_generated: false, 
                 });
                 await newOngoingLoan.save();
+                userLead.lead_status = status;
+                await userLead.save();
 
                 res.status(200).json({status : 'success',code : 200,message : 'Loan Approval Table updated successfully ',data : userLead})
 
