@@ -322,6 +322,8 @@ const updateDisbursalLoanStatus = async (req,res) => {
                 });
                 
                 await newApprovalLoan.save();
+                userLead.lead_status = status;
+                await userLead.save();
                 res.status(200).json({status : 'success',code : 200,ongoing_loan_id : newApprovalLoan._id,message : 'Lead updated successfully & Lead is Moved to Approval Table ',data : userLead})
 
 
