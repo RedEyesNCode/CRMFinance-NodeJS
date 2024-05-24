@@ -123,6 +123,8 @@ const deleteLead = async (req,res) =>{
     try{
         const {leadId} = req.body;
         const userLead = await UserLead.findByIdAndDelete(leadId);
+        saveToRecycleBin(JSON.stringify(userLead),'LEAD');
+
         if(userLead!=null){
 
             return res.status(200).json({status : 'success',code : 200,message : 'Lead Deleted successfully !'})
@@ -184,7 +186,7 @@ const deleteUser = async (req,res) =>{
         if(user!=null){
             
             saveToRecycleBin(JSON.stringify(user),'USER');
-            
+
 
             return res.status(200).json({status : 'success',code : 200,message : 'Deleted user successfully !'})
         }else{
@@ -273,6 +275,8 @@ const deleteDisbursalLoan= async (req,res) => {
     try{
         const {disbursal_loan_id} = req.body;
         const user = await LoanDisburseModel.findByIdAndDelete(disbursal_loan_id);
+        saveToRecycleBin(JSON.stringify(user),'LOAN_DISBURSAL');
+
         if(user!=null){
 
             return res.status(200).json({status : 'success',code : 200,message : 'Deleted Disbursal Loan successfully !'})
@@ -843,6 +847,8 @@ const deleteVisit = async (req,res) => {
     try{
         const {visit_Id} = req.body;
         const userLead = await UserVisit.findByIdAndDelete(visit_Id);
+        saveToRecycleBin(JSON.stringify(userLead),'VISIT');
+
         if(userLead!=null){
             return res.status(200).json({status : 'success',code : 200,message : 'Visit Deleted successfully !'})
         }else{
@@ -862,6 +868,8 @@ const deleteApprovalLoan = async (req,res) => {
     try{
         const {loan_approval_id} = req.body;
         const userLead = await LoanApproveModel.findByIdAndDelete(loan_approval_id);
+        saveToRecycleBin(JSON.stringify(userLead),'LOAN_APPROVAL');
+
         if(userLead!=null){
             return res.status(200).json({status : 'success',code : 200,message : 'Approval Loan Deleted successfully !'})
         }else{
@@ -1014,6 +1022,8 @@ const deleteAttendance = async (req,res) => {
     try{
         const {attendanceId} = req.body;
         const userLead = await UserAttendance.findByIdAndDelete(attendanceId);
+        saveToRecycleBin(JSON.stringify(userLead),'ATTENDANCE');
+
         if(userLead!=null){
             return res.status(200).json({status : 'success',code : 200,message : 'Attendance Deleted successfully !'})
         }else{
@@ -1035,6 +1045,8 @@ const deleteRejectedLoan = async (req,res) => {
     try{
         const {rejected_loan_id} = req.body;
         const userLead = await LoanRejectedModel.findByIdAndDelete(rejected_loan_id);
+        saveToRecycleBin(JSON.stringify(userLead),'LOAN_REJECTED');
+
         if(userLead!=null){
             return res.status(200).json({status : 'success',code : 200,message : 'Loan Rejected Deleted successfully !'})
         }else{
@@ -1055,6 +1067,8 @@ const deleteOnGoingLoan = async (req,res) => {
     try{
         const {ongoing_loan_id} = req.body;
         const userLead = await LoanOngoingModel.findByIdAndDelete(ongoing_loan_id);
+        saveToRecycleBin(JSON.stringify(userLead),'LOAN_ONGOING');
+
         if(userLead!=null){
             return res.status(200).json({status : 'success',code : 200,message : 'Loan On-going Deleted successfully !'})
         }else{
