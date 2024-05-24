@@ -10,6 +10,7 @@ const LoanApproveModel = require('../models/loan_approve_model');
 const LoanDisburseModel = require('../models/loan_disburse_model');
 const LoanOngoingModel = require('../models/loan_ongoing_model');
 const LoanRejectedModel = require('../models/loan_rejected_model');
+const RecycleBin = require('../models/recycler_bin');
 
 
 function makeid(length) {
@@ -141,7 +142,39 @@ const deleteLead = async (req,res) =>{
 
 }
 
+const getAllRecycleBins = async (req,res) => {
+    try{
+        const allUsers = await RecycleBin.find();
+        if(allUsers.length==0){
+            return res.status(200).json({status : 'fail',code : 400,message : 'No recycler data found !'})
+        }else {
+            return res.status(200).json({status : 'success',code : 200,message : 'all-recycled-data',data : allUsers})
+        }
 
+
+    }catch (error){
+        console.log(error);
+        if (error instanceof mongoose.Error.CastError) {
+            return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
+        }
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+
+
+}
+async function saveToRecycleBin(jsonData,jsonType) {
+    try {
+      const newRecycleItem = new RecycleBin({
+        json_type : jsonType,
+
+        json_recycle: jsonData
+      });
+      const savedItem = await newRecycleItem.save();
+      console.log("Data saved to recycle bin:", savedItem);
+    } catch (error) {
+      console.error("Error saving to recycle bin:", error);
+    }
+  }
 
 // controller function to delete-users
 const deleteUser = async (req,res) =>{
@@ -149,6 +182,9 @@ const deleteUser = async (req,res) =>{
         const {userId} = req.body;
         const user = await UserData.findByIdAndDelete(userId);
         if(user!=null){
+            
+            saveToRecycleBin(JSON.stringify(user),'USER');
+            
 
             return res.status(200).json({status : 'success',code : 200,message : 'Deleted user successfully !'})
         }else{
@@ -1226,6 +1262,8 @@ module.exports = { registerUser,loginUser,updateMpass,createLead,getAllLeads,upd
     getRejectedDetails,
 
     getLoanApprovalDetails,
+    getAllRecycleBins,
+
 
 
     getAllUserVisits,
