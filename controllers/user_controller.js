@@ -494,6 +494,42 @@ const closeOnGoingLoan = async (req,res) => {
     }
 
 }
+const updateEmpLead = async (req,res) => {
+    try {
+        const leadId = req.body.leadId;
+        const updateData = req.body; // Data to update the lead with
+
+        // 1. Input Validation (Important!)
+        if (!leadId) {
+            return res.status(400).json({ error: 'Missing leadId in the URL' });
+        }
+
+        // You can add more validation here for specific fields if needed
+        if (!updateData || Object.keys(updateData).length === 0) {
+            return res.status(400).json({ error: 'No update data provided' });
+        }
+
+        // 2. Find and Update the Lead
+        const updatedLead = await UserLead.findByIdAndUpdate(
+            leadId,
+            updateData,
+            { new: true } // Return the updated lead
+        );
+
+        if (!updatedLead) {
+            return res.status(404).json({ error: 'Lead not found' });
+        }
+
+        // 3. Additional Logic (Optional)
+        // You might want to log the update, trigger notifications, etc.
+
+        // 4. Response
+        res.status(200).json(updatedLead); 
+    } catch (error) {
+        console.error('Error updating lead:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
 
 // controller function to update-loan-approval
 const updateLoanApprovalStatus = async (req,res) => {
@@ -1441,7 +1477,7 @@ module.exports = { registerUser,loginUser,updateMpass,createLead,getAllLeads,upd
     getDisbursalLoanDetail,
     deleteOnGoingLoan,
     getOngoingLoanDetail,
-    
+
     deleteRejectedLoan,
 
     getAllRejectedLoans,
@@ -1464,6 +1500,7 @@ module.exports = { registerUser,loginUser,updateMpass,createLead,getAllLeads,upd
     deleteClosedLoan,
 
 
+    updateEmpLead,
 
     getAllUserVisits,
     getAllAttendance,

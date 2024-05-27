@@ -38,6 +38,7 @@ app.post('/get-lead-details',user.getLeadDetails);
 
 app.get('/get-all-users',getAllUsers);
 app.get('/get-all-visits',user.getAllVisits);
+app.post('/update-emp-lead',user.updateEmpLead);
 
 
 app.post('/delete-user',deleteUser);
