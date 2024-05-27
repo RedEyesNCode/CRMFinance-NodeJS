@@ -748,54 +748,64 @@ const updateLeadStatus = async (req,res) => {
                 
                 userLead.lead_status = status;
                 await userLead.save();
-                const newApprovalLoan = new LoanApproveModel({
-                    user: userLead.user,
-                    employee_lead_id_linker : userLead._id,
+                const isApprovalThere = LoanApproveModel.find({employee_lead_id_linker : leadId})
+                if(isApprovalThere==null){
+                    const newApprovalLoan = new LoanApproveModel({
+                        user: userLead.user,
+                        employee_lead_id_linker : userLead._id,
+    
+                        firstName: userLead.firstName,
+                        lastName: userLead.lastName,
+                        middleName: userLead.middleName,
+                        mobileNumber: userLead.mobileNumber,
+                        dob: userLead.dob,
+                        gender: userLead.gender,
+                        pincode: userLead.pincode,
+                        gs_loan_number: userLead.gs_loan_number,
+                        gs_loan_password: userLead.gs_loan_password,
+                        gs_loan_userid: userLead.gs_loan_userid,
+                        userType: userLead.userType,
+                        monthlySalary: userLead.monthlySalary,
+                        relativeName: userLead.relativeName,
+                        relativeNumber: userLead.relativeNumber,
+                        currentAddress: userLead.currentAddress,
+                        state: userLead.state,
+                        aadhar_front: userLead.aadhar_front,
+                        aadhar_back: userLead.aadhar_back,
+                        pancard: userLead.pancard,
+                        pancard_img: userLead.pancard_img,
+                        aadhar_card: userLead.aadhar_card,
+                        selfie: userLead.selfie,
+                        additional_document: userLead.additional_document,
+                        cibil_pdf: userLead.cibil_pdf,
+                        leadAmount: userLead.leadAmount,
+                        lead_interest_rate: userLead.lead_interest_rate,
+                        processingFees: userLead.processingFees,
+                        feesAmount: userLead.feesAmount,
+                        customerLoanAmount: userLead.customerLoanAmount,
+                        empApproveAmount: userLead.empApproveAmount,
+                    
+                        lead_status: status,  
+                    
+                        dateOfBirth: userLead.dateOfBirth,
+                        pincode: userLead.pincode,
+                        gender: userLead.gender,
+                    
+                        disbursementDate: "",  
+                        is_emi_generated: false, 
+                    });
+                    
+                    await newApprovalLoan.save();
+                    res.status(200).json({status : 'success',code : 200,approval_loan_id : newApprovalLoan._id,message : 'Lead updated successfully & Lead is Moved to Approval Table ',data : userLead})
+    
 
-                    firstName: userLead.firstName,
-                    lastName: userLead.lastName,
-                    middleName: userLead.middleName,
-                    mobileNumber: userLead.mobileNumber,
-                    dob: userLead.dob,
-                    gender: userLead.gender,
-                    pincode: userLead.pincode,
-                    gs_loan_number: userLead.gs_loan_number,
-                    gs_loan_password: userLead.gs_loan_password,
-                    gs_loan_userid: userLead.gs_loan_userid,
-                    userType: userLead.userType,
-                    monthlySalary: userLead.monthlySalary,
-                    relativeName: userLead.relativeName,
-                    relativeNumber: userLead.relativeNumber,
-                    currentAddress: userLead.currentAddress,
-                    state: userLead.state,
-                    aadhar_front: userLead.aadhar_front,
-                    aadhar_back: userLead.aadhar_back,
-                    pancard: userLead.pancard,
-                    pancard_img: userLead.pancard_img,
-                    aadhar_card: userLead.aadhar_card,
-                    selfie: userLead.selfie,
-                    additional_document: userLead.additional_document,
-                    cibil_pdf: userLead.cibil_pdf,
-                    leadAmount: userLead.leadAmount,
-                    lead_interest_rate: userLead.lead_interest_rate,
-                    processingFees: userLead.processingFees,
-                    feesAmount: userLead.feesAmount,
-                    customerLoanAmount: userLead.customerLoanAmount,
-                    empApproveAmount: userLead.empApproveAmount,
-                
-                    lead_status: status,  
-                
-                    dateOfBirth: userLead.dateOfBirth,
-                    pincode: userLead.pincode,
-                    gender: userLead.gender,
-                
-                    disbursementDate: "",  
-                    is_emi_generated: false, 
-                });
-                
-                await newApprovalLoan.save();
-                res.status(200).json({status : 'success',code : 200,approval_loan_id : newApprovalLoan._id,message : 'Lead updated successfully & Lead is Moved to Approval Table ',data : userLead})
+                }else{
 
+                    res.status(200).json({status : 'fail',code : 400,message : 'Lead is Already Present in Approval Table'})
+
+                }
+
+                
 
             }else if(status==="DISBURSED"){
                 userLead.disbursementDate(Date.now());
