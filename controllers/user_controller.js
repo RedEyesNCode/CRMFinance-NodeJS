@@ -833,6 +833,26 @@ const getDisbursalLoanDetail = async (req,res) => {
 
 }
 
+const getOngoingLoanDetail = async (req,res) => {
+    try{
+
+        const {ongoing_loan_id} = req.body;
+
+        const lead = await LoanOngoingModel.findById(ongoing_loan_id);
+        if(lead!=null){
+            return res.status(200).json({code : 200,status : 'success', message: "Record Found !",data : lead });
+
+        }else{
+            return res.status(200).json({code : 400,status : 'fail', message: "Ongoing Loan not found" });
+        }
+
+    }catch (error){
+
+        console.log(error);
+    }
+
+}
+
 const getRejectedDetails = async (req,res) => {
     try{
 
@@ -1420,6 +1440,8 @@ module.exports = { registerUser,loginUser,updateMpass,createLead,getAllLeads,upd
     deleteDisbursalLoan,
     getDisbursalLoanDetail,
     deleteOnGoingLoan,
+    getOngoingLoanDetail,
+    
     deleteRejectedLoan,
 
     getAllRejectedLoans,
