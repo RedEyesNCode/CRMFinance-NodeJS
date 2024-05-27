@@ -11,6 +11,7 @@ const LoanDisburseModel = require('../models/loan_disburse_model');
 const LoanOngoingModel = require('../models/loan_ongoing_model');
 const LoanRejectedModel = require('../models/loan_rejected_model');
 const RecycleBin = require('../models/recycler_bin');
+const LoanClosedModel = require('../models/loan_closed_model');
 
 
 function makeid(length) {
@@ -754,7 +755,25 @@ const getRejectedDetails = async (req,res) => {
     }
 
 }
+const getClosedLoanDetails = async (req,res) => {
+    try{
 
+        const {closed_loan_id} = req.body;
+
+        const lead = await LoanClosedModel.findById(closed_loan_id);
+        if(lead!=null){
+            return res.status(200).json({code : 200,status : 'success', message: "Record Found !",data : lead });
+
+        }else{
+            return res.status(200).json({code : 400,status : 'fail', message: "Closed Loan not found" });
+        }
+
+    }catch (error){
+
+        console.log(error);
+    }
+
+}
 
 // controller function to get-lead-by-id
 const getLeadDetails = async (req,res) => {
@@ -986,6 +1005,25 @@ const getAllRejectedLoans = async (req,res) => {
 
 }
 
+const getAllClosedLoan = async (req,res) => {
+    try{
+        const userLead = await LoanClosedModel.find();
+        if(userLead!=null && userLead.length!=0){
+            return res.status(200).json({status : 'success',code : 200,message : 'Closed Loans fetched successfully !',data : userLead})
+        }else{
+            return res.status(200).json({status : 'fail',code : 400,message : 'No Closed Loans found !'})
+        }
+
+    }catch(error){
+        console.log(error);
+        if (error instanceof mongoose.Error.CastError) {
+            return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
+        }
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+
+
+}
 
 
 // controller function to get-user-attendance.
@@ -1051,6 +1089,29 @@ const deleteRejectedLoan = async (req,res) => {
             return res.status(200).json({status : 'success',code : 200,message : 'Loan Rejected Deleted successfully !'})
         }else{
             return res.status(200).json({status : 'fail',code : 400,message : 'No Rejected Loan found !'})
+        }
+
+    }catch(error){
+        console.log(error);
+        if (error instanceof mongoose.Error.CastError) {
+            return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
+        }
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+
+}
+
+const deleteClosedLoan = async (req,res) => {
+
+    try{
+        const {rejected_loan_id} = req.body;
+        const userLead = await LoanClosedModel.findByIdAndDelete(rejected_loan_id);
+        saveToRecycleBin(JSON.stringify(userLead),'LOAN_CLOSED');
+
+        if(userLead!=null){
+            return res.status(200).json({status : 'success',code : 200,message : 'Loan Closed Deleted successfully !'})
+        }else{
+            return res.status(200).json({status : 'fail',code : 400,message : 'No Closed Loan found !'})
         }
 
     }catch(error){
@@ -1158,7 +1219,7 @@ const createVisit = async (req,res) => {
         console.log(error);
         if (error instanceof mongoose.Error.CastError) {
             return res.status(200).json({ status : 'fail',code : 200,error: "Invalid user ID format" });
-        }
+        }   
         res.status(500).json({ error: "Internal Server Error" });
 
     }
@@ -1265,6 +1326,8 @@ module.exports = { registerUser,loginUser,updateMpass,createLead,getAllLeads,upd
     deleteRejectedLoan,
 
     getAllRejectedLoans,
+    getClosedLoanDetails,
+    
 
 
     uploadFile,
@@ -1277,6 +1340,8 @@ module.exports = { registerUser,loginUser,updateMpass,createLead,getAllLeads,upd
 
     getLoanApprovalDetails,
     getAllRecycleBins,
+    getAllClosedLoan,
+    deleteClosedLoan,
 
 
 

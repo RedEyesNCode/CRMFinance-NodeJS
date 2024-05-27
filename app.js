@@ -73,6 +73,15 @@ app.get('/get-all-rejected-loans',user.getAllRejectedLoans);
 app.post('/delete-rejected-loan',user.deleteRejectedLoan);
 app.post('/get-reject-detail',user.getRejectedDetails);
 
+
+//closed-loans
+app.get('/get-all-closed-loans',user.getClosedLoanDetails);
+app.get('/delete-closed-loan',user.deleteClosedLoan);
+app.get('/get-closed-detail',user.getClosedLoanDetails);
+
+
+
+
 app.get('/get-recycle-bin',user.getAllRecycleBins);
 
 
