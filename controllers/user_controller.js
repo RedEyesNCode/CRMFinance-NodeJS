@@ -401,7 +401,7 @@ const closeOnGoingLoan = async (req,res) => {
     try{
         const {close_loan_id, status, amount,feesAmount, interestRate} = req.body;
 
-        const userLead = await LoanOngoingModel.findById(disbursal_loan_id)
+        const userLead = await LoanOngoingModel.findById(close_loan_id)
         if(userLead){
             if(status==="CLOSED"){
                 userLead.lead_status = status;
@@ -1425,7 +1425,7 @@ module.exports = { registerUser,loginUser,updateMpass,createLead,getAllLeads,upd
     getAllRejectedLoans,
     getClosedLoanDetails,
     closeOnGoingLoan,
-    
+
 
 
     uploadFile,
