@@ -66,6 +66,8 @@ app.post('/update-disbursal-loan-status',user.updateDisbursalLoanStatus);
 
 app.post('/delete-ongoing-loan',user.deleteOnGoingLoan);
 app.get('/get-all-ongoing-loans',user.getAllOnGoingLoans);
+app.post('/close-ongoing-loan',user.closeOnGoingLoan);
+
  
 
 //rejected-loans
