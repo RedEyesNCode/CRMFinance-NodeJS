@@ -748,8 +748,8 @@ const updateLeadStatus = async (req,res) => {
                 
                 userLead.lead_status = status;
                 await userLead.save();
-                const isApprovalThere = LoanApproveModel.find({employee_lead_id_linker : leadId})
-                if(isApprovalThere==null){
+                const isApprovalThere = await LoanApproveModel.find({employee_lead_id_linker : leadId})
+                if(isApprovalThere.length === 0){
                     const newApprovalLoan = new LoanApproveModel({
                         user: userLead.user,
                         employee_lead_id_linker : userLead._id,
