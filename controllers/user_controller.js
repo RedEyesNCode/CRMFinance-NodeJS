@@ -538,15 +538,27 @@ const updateLoanApprovalStatus = async (req,res) => {
         const {loan_approval_id, status, amount,feesAmount, interestRate} = req.body;
 
         const userLead = await LoanApproveModel.findById(loan_approval_id)
+        const isDisbursalThere = await LoanDisburseModel.find({employee_lead_id_linker : loan_approval_id})
+        const isRejectedThere = await LoanRejectedModel.find({employee_lead_id_linker : loan_approval_id})
+        const isOngoingThere = await LoanOngoingModel.find({employee_lead_id_linker : loan_approval_id})
+        if(isOngoingThere.length!=0){
+            res.status(200).json({status : 'fail',code : 400,message : 'Loan is already present in Ongoing Loan Table. ',data : userLead})
+
+        }else{
+             
         if(userLead){
             if(status==="DISBURSED"){
-                userLead.lead_status = status;
-                userLead.leadAmount = amount;
-                userLead.feesAmount = feesAmount;
-                userLead.processingFees = feesAmount;
-                userLead.lead_interest_rate = interestRate;
-                userLead.disbursementDate = "";
-                const newApprovalLoan = new LoanDisburseModel({
+                if(isDisbursalThere.length!=0){
+                    res.status(200).json({status : 'fail',code : 400,message : 'Loan  is already present in disbursal table',data : userLead})
+
+                }else{
+                    userLead.lead_status = status;
+                    userLead.leadAmount = amount;
+                    userLead.feesAmount = feesAmount;
+                    userLead.processingFees = feesAmount;
+                    userLead.lead_interest_rate = interestRate;
+                    userLead.disbursementDate = "";
+                    const newApprovalLoan = new LoanDisburseModel({
                     user: userLead.user,
                     employee_lead_id_linker : userLead._id,
                     
@@ -643,11 +655,19 @@ const updateLoanApprovalStatus = async (req,res) => {
                 userLead.lead_status = status;
                 await userLead.save();
 
-                res.status(200).json({status : 'success',code : 200,approval_loan_id : newApprovalLoan._id,message : 'Lead updated successfully & Lead is Moved to Approval Table ',data : userLead})
+                res.status(200).json({status : 'success',code : 200,message : 'Approval Loan Updated updated successfully & Loan is Moved to Disbursal Table ',data : userLead})
 
 
+                }
+                
             }else if(status==="REJECTED"){
-                userLead.lead_status = status;
+
+                if(isRejectedThere.length!=0){
+                    res.status(200).json({status : 'fail',code : 400,message : 'Loan is already present in Rejected Loan Table. ',data : userLead})
+
+
+                }else{
+                    userLead.lead_status = status;
                 userLead.leadAmount = amount;
                 userLead.feesAmount = feesAmount;
                 userLead.processingFees = feesAmount;
@@ -704,6 +724,8 @@ const updateLoanApprovalStatus = async (req,res) => {
 
                 res.status(200).json({status : 'success',code : 200,message : 'Loan Approval Table updated successfully ',data : userLead})
 
+                }
+                
             }else{
                 userLead.lead_status = status;
                 await userLead.save();
@@ -716,6 +738,8 @@ const updateLoanApprovalStatus = async (req,res) => {
             res.status(200).json({status : 'fail',code : 200,error : 'Loan Approval Record Not Found !'})
 
         }
+        } 
+       
 
     }catch (error){
         console.log(error);
@@ -808,7 +832,7 @@ const updateLeadStatus = async (req,res) => {
                 
 
             }else if(status==="DISBURSED"){
-                userLead.disbursementDate(Date.now());
+                userLead.disbursementDate = Date.now();
                 userLead.lead_status = status;
                 await userLead.save();
 
