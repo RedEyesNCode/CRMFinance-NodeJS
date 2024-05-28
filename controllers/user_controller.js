@@ -552,7 +552,7 @@ const updateLoanApprovalStatus = async (req,res) => {
         const isDisbursalThere = await LoanDisburseModel.find({employee_lead_id_linker : loan_approval_id})
         const isRejectedThere = await LoanRejectedModel.find({employee_lead_id_linker : loan_approval_id})
         const isOngoingThere = await LoanOngoingModel.find({employee_lead_id_linker : loan_approval_id})
-        
+
 
 
         if(isOngoingThere.length!=0){
@@ -880,7 +880,7 @@ const updateLeadStatus = async (req,res) => {
 // controller function to get-all-leads
 const getAllLeads = async (req,res) =>{
     try{
-        const allLeads = await UserLead.find();
+        const allLeads = await UserLead.find().populate('user');
         if(allLeads.length==0){
             res.status(200).json({status : 'fail',code : 200,error : 'No Leads Exists'})
         }else{
