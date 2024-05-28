@@ -80,7 +80,7 @@ app.post('/get-reject-detail',user.getRejectedDetails);
 
 //closed-loans
 app.get('/get-all-closed-loans',user.getAllClosedLoan);
-app.get('/delete-closed-loan',user.deleteClosedLoan);
+app.post('/delete-closed-loan',user.deleteClosedLoan);
 app.get('/get-closed-detail',user.getClosedLoanDetails);
 
 

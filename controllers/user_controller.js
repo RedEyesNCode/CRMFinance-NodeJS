@@ -41,6 +41,9 @@ const uploadLeadCibilPdf = async(req,res) => {
     try{
         const {leadId} = req.body;
         const userLead = await UserLead.findById(leadId);
+        
+        console.log('leadID'+leadId);
+
         if(userLead!=null){
             const fileLocation = await req.file.location;
             userLead.cibil_pdf = fileLocation;
@@ -400,88 +403,96 @@ const closeOnGoingLoan = async (req,res) => {
 
     try{
         const {close_loan_id, status, amount,feesAmount, interestRate} = req.body;
+        const isCloseAlready = await LoanClosedModel.find({employee_lead_id_linker : close_loan_id})
 
         const userLead = await LoanOngoingModel.findById(close_loan_id)
         if(userLead){
-            if(status==="CLOSED"){
-                userLead.lead_status = status;
-                userLead.leadAmount = amount;
-                userLead.feesAmount = feesAmount;
-                userLead.processingFees = feesAmount;
-                userLead.lead_interest_rate = interestRate;
-                userLead.disbursementDate = "";
-                // update the loan_approve_table as well.
-                
-                
-                userLead.lead_status = status;
-                await userLead.save();
-                const newApprovalLoan = new LoanClosedModel({
-                    user: userLead.user,
-                    employee_lead_id_linker : userLead._id,
+            if(isCloseAlready.length===0){
+                if(status==="CLOSED"){
+                    userLead.lead_status = status;
+                    userLead.leadAmount = amount;
+                    userLead.feesAmount = feesAmount;
+                    userLead.processingFees = feesAmount;
+                    userLead.lead_interest_rate = interestRate;
+                    userLead.disbursementDate = "";
+                    // update the loan_approve_table as well.
                     
-                    firstName: userLead.firstName,
-                    lastName: userLead.lastName,
-                    middleName: userLead.middleName,
-                    mobileNumber: userLead.mobileNumber,
-                    dob: userLead.dob,
-                    gender: userLead.gender,
-                    pincode: userLead.pincode,
-                    gs_loan_number: userLead.gs_loan_number,
-                    gs_loan_password: userLead.gs_loan_password,
-                    gs_loan_userid: userLead.gs_loan_userid,
-                    userType: userLead.userType,
-                    monthlySalary: userLead.monthlySalary,
-                    relativeName: userLead.relativeName,
-                    relativeNumber: userLead.relativeNumber,
-                    currentAddress: userLead.currentAddress,
-                    state: userLead.state,
-                    aadhar_front: userLead.aadhar_front,
-                    aadhar_back: userLead.aadhar_back,
-                    pancard: userLead.pancard,
-                    pancard_img: userLead.pancard_img,
-                    aadhar_card: userLead.aadhar_card,
-                    selfie: userLead.selfie,
-                    additional_document: userLead.additional_document,
-                    cibil_pdf: userLead.cibil_pdf,
-                    leadAmount: userLead.leadAmount,
-                    lead_interest_rate: userLead.lead_interest_rate,
-                    processingFees: userLead.processingFees,
-                    feesAmount: userLead.feesAmount,
-                    customerLoanAmount: userLead.customerLoanAmount,
-                    empApproveAmount: userLead.empApproveAmount,
-                
-                    lead_status: status,  
-                
-                    dateOfBirth: userLead.dateOfBirth,
-                    pincode: userLead.pincode,
-                    gender: userLead.gender,
-                
-                    disbursementDate: Date.now(),  
-                    is_emi_generated: false, 
-                });
-                
-                await newApprovalLoan.save();
-                userLead.lead_status = status;
-                await userLead.save();
-                res.status(200).json({status : 'success',code : 200,ongoing_loan_id : newApprovalLoan._id,message : 'Lead updated successfully & Lead is Moved to Approval Table ',data : userLead})
-
-
-            }else if(status==="DISBURSED"){
-                userLead.lead_status = status;
-                await userLead.save();
-
-                res.status(200).json({status : 'success',code : 200,message : 'Loan Approval Table updated successfully ',data : userLead})
+                    
+                    userLead.lead_status = status;
+                    await userLead.save();
+                    const newApprovalLoan = new LoanClosedModel({
+                        user: userLead.user,
+                        employee_lead_id_linker : userLead._id,
+                        
+                        firstName: userLead.firstName,
+                        lastName: userLead.lastName,
+                        middleName: userLead.middleName,
+                        mobileNumber: userLead.mobileNumber,
+                        dob: userLead.dob,
+                        gender: userLead.gender,
+                        pincode: userLead.pincode,
+                        gs_loan_number: userLead.gs_loan_number,
+                        gs_loan_password: userLead.gs_loan_password,
+                        gs_loan_userid: userLead.gs_loan_userid,
+                        userType: userLead.userType,
+                        monthlySalary: userLead.monthlySalary,
+                        relativeName: userLead.relativeName,
+                        relativeNumber: userLead.relativeNumber,
+                        currentAddress: userLead.currentAddress,
+                        state: userLead.state,
+                        aadhar_front: userLead.aadhar_front,
+                        aadhar_back: userLead.aadhar_back,
+                        pancard: userLead.pancard,
+                        pancard_img: userLead.pancard_img,
+                        aadhar_card: userLead.aadhar_card,
+                        selfie: userLead.selfie,
+                        additional_document: userLead.additional_document,
+                        cibil_pdf: userLead.cibil_pdf,
+                        leadAmount: userLead.leadAmount,
+                        lead_interest_rate: userLead.lead_interest_rate,
+                        processingFees: userLead.processingFees,
+                        feesAmount: userLead.feesAmount,
+                        customerLoanAmount: userLead.customerLoanAmount,
+                        empApproveAmount: userLead.empApproveAmount,
+                    
+                        lead_status: status,  
+                    
+                        dateOfBirth: userLead.dateOfBirth,
+                        pincode: userLead.pincode,
+                        gender: userLead.gender,
+                    
+                        disbursementDate: Date.now(),  
+                        is_emi_generated: false, 
+                    });
+                    
+                    await newApprovalLoan.save();
+                    userLead.lead_status = status;
+                    await userLead.save();
+                    res.status(200).json({status : 'success',code : 200,ongoing_loan_id : newApprovalLoan._id,message : 'Lead updated successfully & Lead is Moved to Approval Table ',data : userLead})
+    
+    
+                }else if(status==="DISBURSED"){
+                    userLead.lead_status = status;
+                    await userLead.save();
+    
+                    res.status(200).json({status : 'success',code : 200,message : 'Loan Approval Table updated successfully ',data : userLead})
+    
+                }else{
+                    userLead.lead_status = status;
+                    await userLead.save();
+                    res.status(200).json({status : 'success',code : 200,message : 'Loan Approval Table updated successfully ',data : userLead})
+    
+                }
 
             }else{
-                userLead.lead_status = status;
-                await userLead.save();
-                res.status(200).json({status : 'success',code : 200,message : 'Loan Approval Table updated successfully ',data : userLead})
+                res.status(200).json({status : 'fail',code : 400,message : 'Ongoing-Loan Already present in Closed Loan Table',data : userLead})
 
             }
+            
 
                 
         }else{
-            res.status(200).json({status : 'fail',code : 200,error : 'Loan Approval Record Not Found !'})
+            res.status(200).json({status : 'fail',code : 200,error : 'Loan Closed Record Not Found !'})
 
         }
 
@@ -541,8 +552,11 @@ const updateLoanApprovalStatus = async (req,res) => {
         const isDisbursalThere = await LoanDisburseModel.find({employee_lead_id_linker : loan_approval_id})
         const isRejectedThere = await LoanRejectedModel.find({employee_lead_id_linker : loan_approval_id})
         const isOngoingThere = await LoanOngoingModel.find({employee_lead_id_linker : loan_approval_id})
+        
+
+
         if(isOngoingThere.length!=0){
-            res.status(200).json({status : 'fail',code : 400,message : 'Loan is already present in Ongoing Loan Table. ',data : userLead})
+            res.status(200).json({status : 'fail',code : 400,message : 'Loan is already present in Ongoing & Disbursement Loan Table. ',data : userLead})
 
         }else{
              
