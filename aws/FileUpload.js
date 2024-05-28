@@ -37,7 +37,7 @@ const storage = multerS3({
 })
 
 function checkFileType(file, cb) {
-  const filetypes = /jpeg|jpg|png|gif|webp/; // Removed mp4 and mov
+  const filetypes = /jpeg|jpg|png|gif|webp|pdf/; // Removed mp4 and mov
 
   const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
 
@@ -52,6 +52,8 @@ function checkFileType(file, cb) {
       mimetype = 'image/gif';
     } else if (extname === '.webp') {
       mimetype = 'image/webp';
+    }else if (extname === '.pdf') {
+      mimetype = 'application/pdf';
     }
     // Pass the file object with updated MIME type
     cb(null, true, mimetype);

@@ -39,14 +39,15 @@ function makeidNumber(length) {
 // upload-lead-cibil
 const uploadLeadCibilPdf = async(req,res) => {
     try{
-        const {leadId} = req.body;
+        const {leadId,leadCibilUrl} = req.body;
         const userLead = await UserLead.findById(leadId);
         
         console.log('leadID'+leadId);
+        console.log(req.body);
+        
 
         if(userLead!=null){
-            const fileLocation = await req.file.location;
-            userLead.cibil_pdf = fileLocation;
+            userLead.cibil_pdf = leadCibilUrl;
             await userLead.save();
             res.status(200).json({status : 'success',code : 200,message : "Uploaded Lead PDF Successfully !" });
 

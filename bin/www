@@ -1,6 +1,6 @@
 var app = require("../app");
 var debug = require("debug")("project1:server");
-var https = require("https");
+var http = require("http");
 const certificateString = `-----BEGIN CERTIFICATE-----
 MIIE9zCCA9+gAwIBAgISBPEu2gvpQCQ+DajCTzuRcmxYMA0GCSqGSIb3DQEBCwUA
 MDIxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MQswCQYDVQQD
@@ -105,7 +105,7 @@ const options = {
   ca: fullChain,
 };
 
-var server = https.createServer(options, app);
+var server = http.createServer( app);
 
 server.listen(port);
 server.on("error", onError);
