@@ -656,7 +656,7 @@ const updateLoanApprovalStatus = async (req,res) => {
                     customerLoanAmount: userLead.customerLoanAmount,
                     empApproveAmount: userLead.empApproveAmount,
                 
-                    lead_status: status,  
+                    lead_status: 'ACTIVE',  
                 
                     dateOfBirth: userLead.dateOfBirth,
                     pincode: userLead.pincode,
