@@ -57,6 +57,9 @@ app.post('/upload-lead-pdf',uploadMiddleWare.single('cibil_pdf'),user.uploadLead
 app.get('/get-all-approval-loans',user.getAllApprovalLoans);
 app.post('/delete-approval-loan',user.deleteApprovalLoan);
 app.post('/update-approval-loan-status',user.updateLoanApprovalStatus);
+
+app.post('/update-amount-fields',user.updateAmountFields);
+
 app.post('/get-approval-loan-detail',user.getLoanApprovalDetails);
 
 app.get('/get-all-disburse-loans',user.getAllDisburmentLoans);
@@ -69,6 +72,8 @@ app.post('/delete-ongoing-loan',user.deleteOnGoingLoan);
 app.get('/get-all-ongoing-loans',user.getAllOnGoingLoans);
 app.post('/close-ongoing-loan',user.closeOnGoingLoan);
 app.post('/get-ongoing-loan-detail',user.getOngoingLoanDetail);
+app.post('/get-ongoing-emi-detail',user.ongoingEmiDetail);
+app.post('/get-emi-amount-detail',user.calculateTotals);
 
  
 
