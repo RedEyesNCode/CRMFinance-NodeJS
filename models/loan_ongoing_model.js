@@ -42,7 +42,7 @@ const loanApproveModel = new mongoose.Schema({
     feesAmount: { type: String, default: "" },
     customerLoanAmount: { type: String, default: "" },
     empApproveAmount: { type: String, default: "" },
-    lead_status : {type: String,enum : ['EMPTY','PENDING','APPROVED','REJECTED','DISBURSED','ONGOING','CLOSED'],default : 'PENDING'},
+    lead_status : {type: String,enum : ['EMPTY','PENDING','APPROVED','REJECTED','DISBURSED','ONGOING','CLOSED','ACTIVE'],default : 'PENDING'},
 
     dateOfBirth: { 
         type:String,

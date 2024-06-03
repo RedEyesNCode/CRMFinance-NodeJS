@@ -1,6 +1,6 @@
 var app = require("../app");
 var debug = require("debug")("project1:server");
-var http = require("http");
+var https = require("https");
 const certificateString = `-----BEGIN CERTIFICATE-----
 MIIE9zCCA9+gAwIBAgISBPEu2gvpQCQ+DajCTzuRcmxYMA0GCSqGSIb3DQEBCwUA
 MDIxCzAJBgNVBAYTAlVTMRYwFAYDVQQKEw1MZXQncyBFbmNyeXB0MQswCQYDVQQD
@@ -90,9 +90,6 @@ MldlTTKB3zhThV1+XWYp6rjd5JW1zbVWEkLNxE7GJThEUG3szgBVGP7pSWTUTsqX
 nLRbwHOoq7hHwg==
 -----END CERTIFICATE-----`;
 
-
-
-
 const port = normalizePort(process.env.PORT || "3000");
 app.set("port", port);
 
@@ -105,12 +102,11 @@ const options = {
   ca: fullChain,
 };
 
-var server = http.createServer(app);
+var server = https.createServer(options, app);
 
 server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
-
 
 function normalizePort(val) {
   var port = parseInt(val, 10);
@@ -127,7 +123,6 @@ function normalizePort(val) {
 
   return false;
 }
-
 
 function onError(error) {
   if (error.syscall !== "listen") {
@@ -149,7 +144,6 @@ function onError(error) {
       throw error;
   }
 }
-
 
 function onListening() {
   var addr = server.address();
