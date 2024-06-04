@@ -1473,8 +1473,7 @@ const getLeadEmi = async (req,res) => {
       const EMI = (P + totalInterest) / N;
       const totalAmount = EMI * N;
       console.log(req.body);
-      const emiPaymentArray = generateEmiSchedule(req.body);
-      console.log(emiPaymentArray);
+     
       return res
         .status(200)
         .json({
@@ -1700,7 +1699,7 @@ const getAllUserApprovedLeads = async (req,res) => {
 
 const getAllUserLeads = async (req, res) => {
   try {
-    const userLead = await UserLead.find({ user: req.body.userId });
+    const userLead = await UserLead.find({ user: req.body.userId }).sort({ createdAt: -1 });
     if (userLead.length != 0) {
       return res
         .status(200)
