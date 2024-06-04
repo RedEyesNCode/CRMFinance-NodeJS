@@ -1457,6 +1457,50 @@ const getClosedLoanDetails = async (req, res) => {
   }
 };
 
+const getLeadEmi = async (req,res) => {
+
+  try{
+    const {leadId,emi_tenure} = req.body;
+    const lead = await UserLead.findById(leadId);
+    if(lead){
+      const P = parseFloat(lead.leadAmount);
+      const R = parseFloat(lead.lead_interest_rate) / 100 / 12; // Monthly interest rate
+      const N = parseFloat(emi_tenure);
+
+      // Flat EMI Calculation
+      const monthlyInterest = P * R;
+      const totalInterest = monthlyInterest * N;
+      const EMI = (P + totalInterest) / N;
+      const totalAmount = EMI * N;
+      console.log(req.body);
+      const emiPaymentArray = generateEmiSchedule(req.body);
+      console.log(emiPaymentArray);
+      return res
+        .status(200)
+        .json({
+          code: 200,
+          status: "success",
+          message: "Emi Details",
+          monthly_interest : monthlyInterest,
+          total_interest : totalInterest,
+          emi_amount : EMI,
+          total_amount : totalAmount,
+          payment_array : emiPaymentArray
+        });
+
+    }else{
+      return res
+        .status(200)
+        .json({ code: 400, status: "fail", message: "Lead not found" });
+    }
+
+   
+  }catch(error){
+    console.log(error);
+  }
+
+
+}
 // controller function to get-lead-by-id
 const getLeadDetails = async (req, res) => {
   try {
@@ -1622,6 +1666,37 @@ const deleteApprovalLoan = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+const getAllUserApprovedLeads = async (req,res) => {
+  
+  try {
+    const userLead = await UserLead.find({ user: req.body.userId, lead_status : 'APPROVED' });
+    if (userLead.length != 0) {
+      return res
+        .status(200)
+        .json({
+          status: "success",
+          code: 200,
+          message: "User Leads Fetched successfully !",
+          data: userLead,
+        });
+    } else {
+      return res
+        .status(200)
+        .json({ status: "fail", code: 400, message: "No User Leads found !" });
+    }
+  } catch (error) {
+    console.log(error);
+    if (error instanceof mongoose.Error.CastError) {
+      return res
+        .status(200)
+        .json({ status: "fail", code: 200, error: "Invalid user ID format" });
+    }
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+
+
+}
 
 const getAllUserLeads = async (req, res) => {
   try {
@@ -2051,6 +2126,9 @@ const createVisit = async (req, res) => {
   }
 };
 
+
+
+
 // Controller function for user registration
 
 const registerUser = async (req, res) => {
@@ -2143,6 +2221,7 @@ module.exports = {
   getAllUserLeads,
   getAllVisits,
   getUserAttendance,
+  getAllUserApprovedLeads,  
   createAttendance,
   updateLoanApprovalStatus,
   updateDisbursalLoanStatus,
@@ -2161,7 +2240,7 @@ module.exports = {
   getAllRejectedLoans,
   getClosedLoanDetails,
   closeOnGoingLoan,
-
+  getLeadEmi,
   uploadFile,
   getAllApprovalLoans,
   deleteApprovalLoan,
