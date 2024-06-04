@@ -651,29 +651,41 @@ const updateEmpLead = async (req, res) => {
   }
 };
 // check unique lead
-const checkUniqueLead = async (req,res) => {
-  try{
-    const isMobileNumberThere = await UserLead.find({mobileNumber : req.body.number});
-    const isPancardThere = await UserLead.find({panCard : req.body.pancard});
-    const isAadharThere = await UserLead.find({aadhar_card : req.body.aadhar});
+const checkUniqueLead = async (req, res) => {
+  try {
+    const { number, pancard, aadhar } = req.body;
 
-    if(isMobileNumberThere==null || isPancardThere==null || isAadharThere ==null){
-      res.status(200).json({ message: "New Lead Found",status : "success",code : 200 });
+    const existingLead = await UserLead.findOne({
+      $or: [
+        { mobileNumber: number },
+        { panCard: pancard },
+        { aadhar_card: aadhar }
+      ]
+    });
 
- 
-    }else{
-      res.status(200).json({ message: "Lead already exists",status : "fail",code : 400 });
-
+    if (!existingLead) {
+      res.status(200).json({
+        message: "New Lead Found",
+        status: "success",
+        code: 200
+      });
+    } else {
+      res.status(200).json({ 
+        message: "Lead already exists", 
+        status: "fail", 
+        code: 400 
+      });
     }
-
-  }catch(error){
-    console.log(error);
-
+  } catch (error) {
+    console.error("Error checking for unique lead:", error);
+    res.status(200).json({
+      message: "Internal server error",
+      status: "error",
+      code: 500
+    });
   }
+};
 
-
-
-}
 
 
 
