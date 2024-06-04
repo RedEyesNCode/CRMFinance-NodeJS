@@ -1697,6 +1697,114 @@ const getAllUserApprovedLeads = async (req,res) => {
 
 }
 
+const searchUserLeadsByDate = async(req,res) => {
+
+
+  try {
+    const { userId, fromDate, toDate } = req.body;
+
+    // Date Validation (Ensure valid date formats)
+    const startDate = new Date(fromDate);
+    const endDate = new Date(toDate);
+
+    if (isNaN(startDate) || isNaN(endDate)) {
+        return res.status(400).json({ error: 'Invalid date format. Please use YYYY-MM-DD' });
+    }
+
+    // Query Logic
+    const leads = await UserLead.find({
+        user: userId,
+        createdAt: {
+            $gte: startDate,   // Greater than or equal to fromDate
+            $lte: endDate,    // Less than or equal to toDate
+        },
+    });
+
+    res.json({status : 'success',code : 200,,message : 'User-Filtered-Leads-Date',data : leads});
+} catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+}
+
+}
+
+const searchUserLeads = async (req,res) => {
+
+
+  try {
+    const userId = req.body.userId;
+    const queryText = req.body.queryText;
+
+    // Search Logic (Case-Insensitive)
+    const leads = await UserLead.find({
+        user: userId,
+        $or: [
+            { firstName: { $regex: queryText, $options: 'i' } }, // Case-insensitive search
+        ],
+    });
+
+    res.json({status : 'success',code : 200, message : 'User-Filtered-Leads-Text',data : leads});
+} catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+}
+
+
+}
+const searchUserLeadsByStatus = async (req,res) => {
+  try {
+    const { userId, status } = req.body;
+
+    // Input Validation (Optional but recommended)
+    if (!userId || !status) {
+        return res.status(400).json({ error: 'userId and status are required' });
+    }
+    if (!['EMPTY','PENDING','APPROVED','REJECTED','DISBURSED'].includes(status)){
+        return res.status(400).json({ error: 'Invalid status value'});
+    }
+
+    // Query Logic
+    const leads = await UserLead.find({
+        user: userId,
+        lead_status: status,
+    });
+
+    res.json({status : 'success',code : 200, message : 'User-Filtered-Leads-Status',data : leads});
+} catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+}
+
+
+
+}
+
+const getLeadsByDateAndStatus = async (req, res) => {
+  try {
+      const { fromDate, toDate, leadStatus } = req.body;
+
+      // Input Validation
+      if (!fromDate || !toDate || !leadStatus) {
+          return res.status(400).json({ error: 'Missing required parameters: fromDate, toDate, leadStatus' });
+      }
+
+      // Query Construction
+      const query = UserLead.find({
+          createdAt: {
+              $gte: new Date(fromDate), 
+              $lte: new Date(toDate)    
+          },
+          lead_status: leadStatus       
+      });
+
+      const filteredLeads = await query.exec();
+      res.json(filteredLeads);
+  } catch (err) {
+      res.status(500).json({ error: err.message });
+  }
+};
+
+
 const getAllUserLeads = async (req, res) => {
   try {
     const userLead = await UserLead.find({ user: req.body.userId }).sort({ createdAt: -1 });
@@ -2263,4 +2371,9 @@ module.exports = {
 
   createVisit,
   deleteVisit,
+  searchUserLeads,
+  searchUserLeadsByDate,
+  searchUserLeadsByStatus,
+  getLeadsByDateAndStatus
+  
 };
