@@ -650,6 +650,34 @@ const updateEmpLead = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+// check unique lead
+const checkUniqueLead = async (req,res) => {
+  try{
+    const isMobileNumberThere = await UserLead.find({mobileNumber : req.body.number});
+    const isPancardThere = await UserLead.find({panCard : req.body.pancard});
+    const isAadharThere = await UserLead.find({aadhar_card : req.body.aadhar});
+
+    if(isMobileNumberThere==null && isPancardThere==null && isAadharThere ==null){
+      res.status(200).json({ message: "New Lead Found",status : "success",code : 200 });
+
+ 
+    }else{
+      res.status(200).json({ message: "Lead already exists",status : "fail",code : 400 });
+
+    }
+
+  }catch(error){
+    console.log(error);
+
+  }
+
+
+
+}
+
+
+
+
 // controller function to update-amount-in-all-tables.
 const updateAmountFields = async (req, res) => {
   try {
@@ -2137,6 +2165,7 @@ module.exports = {
   updateAmountFields,
 
   updateEmpLead,
+  checkUniqueLead,
 
   getAllUserVisits,
   getAllAttendance,

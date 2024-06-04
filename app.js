@@ -45,6 +45,8 @@ app.post('/delete-user',deleteUser);
 app.post('/delete-visit',deleteVisit);
 app.post('/delete-lead',deleteLead);
 app.post('/get-user-leads',getAllUserLeads);
+app.post('/check-unique-lead',user.checkUniqueLead);
+
 app.post('/get-user-visit',getAllUserVisits);
 app.post('/create-attendance',user.createAttendance);
 app.post('/delete-attendance',user.deleteAttendance);
@@ -52,6 +54,8 @@ app.post('/get-user-attendance',user.getUserAttendance);
 app.get('/get-all-attendance',user.getAllAttendance);
 app.post('/upload-file',uploadMiddleWare.single('file'),user.uploadFile);
 app.post('/upload-lead-pdf',uploadMiddleWare.single('cibil_pdf'),user.uploadLeadCibilPdf);
+
+
 
 // extra modules & tables.
 app.get('/get-all-approval-loans',user.getAllApprovalLoans);
