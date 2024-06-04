@@ -657,7 +657,7 @@ const checkUniqueLead = async (req,res) => {
     const isPancardThere = await UserLead.find({panCard : req.body.pancard});
     const isAadharThere = await UserLead.find({aadhar_card : req.body.aadhar});
 
-    if(isMobileNumberThere==null && isPancardThere==null && isAadharThere ==null){
+    if(isMobileNumberThere==null || isPancardThere==null || isAadharThere ==null){
       res.status(200).json({ message: "New Lead Found",status : "success",code : 200 });
 
  
