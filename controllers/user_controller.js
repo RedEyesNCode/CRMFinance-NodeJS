@@ -272,7 +272,7 @@ const getAllUsers = async (req, res) => {
 
 const getAllDisburmentLoans = async (req, res) => {
   try {
-    const allLeads = await LoanDisburseModel.find();
+    const allLeads = await LoanDisburseModel.find().sort({ createdAt: -1 }).populate("user");
     if (allLeads.length == 0) {
       res
         .status(200)
@@ -1563,6 +1563,8 @@ const createLead = async (req, res) => {
   try {
     const { userId, mobileNumber, pancard, aadhar_card } = req.body; // Get lead data from the request body
     console.log(req.body);
+    const leadCount = await UserLead.find();
+
 
     // Check if userId is valid
     const user = await UserData.findById(userId);
@@ -1587,6 +1589,8 @@ const createLead = async (req, res) => {
     // Create a new UserLead document
     const newLead = new UserLead(req.body);
     newLead.user = userId;
+    newLead.generated_loan_id = 'GS-LOAN-'+leadCount.length+1;
+
     // const initialCounter = new Counter({ _id: 'userLeadId', seq: 0 });
     // await initialCounter.save();
     // Save the lead to the database
