@@ -244,7 +244,7 @@ const deleteUser = async (req, res) => {
 // controller function to get-all-users
 const getAllUsers = async (req, res) => {
   try {
-    const allUsers = await UserData.find();
+    const allUsers = await UserData.find().sort({ createdAt: -1 });
     if (allUsers.length == 0) {
       return res
         .status(200)
@@ -302,7 +302,7 @@ const getAllDisburmentLoans = async (req, res) => {
 
 const getAllApprovalLoans = async (req, res) => {
   try {
-    const allLeads = await LoanApproveModel.find();
+    const allLeads = await LoanApproveModel.find().sort({ createdAt: -1 }).populate("user");
     if (allLeads.length == 0) {
       res
         .status(200)
@@ -1302,7 +1302,11 @@ const updateLeadStatus = async (req, res) => {
 // controller function to get-all-leads
 const getAllLeads = async (req, res) => {
   try {
-    const allLeads = await UserLead.find().populate("user");
+    
+    const allLeads = await UserLead.find().sort({ createdAt: -1 }).populate("user");
+    console.log(allLeads); // Log the raw results to check the order
+
+
     if (allLeads.length == 0) {
       res
         .status(200)
@@ -1313,11 +1317,11 @@ const getAllLeads = async (req, res) => {
         .json({
           status: "success",
           code: 200,
-          message: "all-admin-leads",
+          message: "all-admin-xxx",
           data: allLeads,
         });
     }
-  } catch (error) {
+  } catch (error) { 
     console.error(error);
     if (error instanceof mongoose.Error.CastError) {
       return res
@@ -1572,6 +1576,7 @@ const createLead = async (req, res) => {
       pancard: pancard,
       aadhar_card: aadhar_card,
     });
+    
 
     if (existingLead.length != 0) {
       return res
@@ -1582,7 +1587,8 @@ const createLead = async (req, res) => {
     // Create a new UserLead document
     const newLead = new UserLead(req.body);
     newLead.user = userId;
-
+    // const initialCounter = new Counter({ _id: 'userLeadId', seq: 0 });
+    // await initialCounter.save();
     // Save the lead to the database
     const savedLead = await newLead.save();
 
@@ -1720,7 +1726,7 @@ const searchUserLeadsByDate = async(req,res) => {
         },
     });
 
-    res.json({status : 'success',code : 200,,message : 'User-Filtered-Leads-Date',data : leads});
+    res.json({status : 'success',code : 200,message : 'User-Filtered-Leads-Date',data : leads});
 } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });
@@ -1779,9 +1785,11 @@ const searchUserLeadsByStatus = async (req,res) => {
 
 }
 
-const getLeadsByDateAndStatus = async (req, res) => {
+const getLeadsByDateAndStatusName = async (req, res) => {
   try {
-      const { fromDate, toDate, leadStatus } = req.body;
+      const { fromDate, toDate, leadStatus,leadFirstName } = req.body;
+      console.log(req.body);
+      
 
       // Input Validation
       if (!fromDate || !toDate || !leadStatus) {
@@ -1794,7 +1802,8 @@ const getLeadsByDateAndStatus = async (req, res) => {
               $gte: new Date(fromDate), 
               $lte: new Date(toDate)    
           },
-          lead_status: leadStatus       
+          lead_status: leadStatus,
+          firstName : leadFirstName       
       });
 
       const filteredLeads = await query.exec();
@@ -1862,7 +1871,7 @@ const getAllUserVisits = async (req, res) => {
 
 const getAllVisits = async (req, res) => {
   try {
-    const userLead = await UserVisit.find();
+    const userLead = await UserVisit.find().sort({ createdAt: -1 }).populate("user");
     if (userLead != null && userLead.length != 0) {
       return res
         .status(200)
@@ -2146,7 +2155,7 @@ const deleteOnGoingLoan = async (req, res) => {
 // controller function to get-all-attendance.
 const getAllAttendance = async (req, res) => {
   try {
-    const allAttendance = await UserAttendance.find();
+    const allAttendance = await UserAttendance.find().sort({ createdAt: -1 }).populate("user");
     if (allAttendance.length != 0) {
       return res
         .status(200)
@@ -2374,6 +2383,6 @@ module.exports = {
   searchUserLeads,
   searchUserLeadsByDate,
   searchUserLeadsByStatus,
-  getLeadsByDateAndStatus
-  
+  getLeadsByDateAndStatusName
+
 };

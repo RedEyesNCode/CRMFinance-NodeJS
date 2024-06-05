@@ -34,6 +34,8 @@ app.post('/create-lead',createLead);
 app.post('/create-visit',user.createVisit)
 app.post('/update-lead-status',updateLeadStatus);
 app.get('/get-all-leads',getAllLeads);
+app.post('/search-lead',user.getLeadsByDateAndStatusName);
+
 app.post('/get-lead-details',user.getLeadDetails);
 
 app.get('/get-all-users',getAllUsers);
@@ -45,6 +47,8 @@ app.post('/delete-user',deleteUser);
 app.post('/delete-visit',deleteVisit);
 app.post('/delete-lead',deleteLead);
 app.post('/get-user-leads',getAllUserLeads);
+app.post('/search-user-lead-by-name',user.searchUserLeads);
+app.post('/search-user-lead-by-date-status',user.searchUserLeadsByStatus)
 app.post('/get-user-approved-leads',user.getAllUserApprovedLeads);
 
 app.post('/check-unique-lead',user.checkUniqueLead);
