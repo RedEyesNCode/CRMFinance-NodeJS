@@ -1,7 +1,6 @@
 // user_lead_model.js
 
 const mongoose = require('mongoose');
-
 const UserLeadSchema = new mongoose.Schema({
     // Reference to the parent UserData document
     user: {
@@ -9,6 +8,8 @@ const UserLeadSchema = new mongoose.Schema({
         ref: 'UserData', // Reference the UserData model 
         required: true ,
     },
+    generated_loan_id: { type: String, default: "" },
+
     firstName: { type: String, default: "" },
     lastName: { type: String, default: "" },
     middleName: { type: String, default: "" },
@@ -52,7 +53,7 @@ const UserLeadSchema = new mongoose.Schema({
     pincode: { type: String, default: "" },
     createdAt: { type: Date, default: Date.now },
     disbursementDate: { type: String, default : "" },
-
+    
     updatedAt: { type: Date, default: Date.now }
 });
 

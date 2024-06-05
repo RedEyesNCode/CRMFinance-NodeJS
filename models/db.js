@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 
 
 mongoose
-  .connect("mongodb://127.0.0.1:27017/CRMFinanceNodejs")
+  .connect("mongodb://3.111.135.18:27017/CRMFinanceNodejs")
   .then(async () => {
     console.log("Database connected!");
     

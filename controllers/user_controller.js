@@ -228,7 +228,7 @@ const deleteUser = async (req, res) => {
 // controller function to get-all-users
 const getAllUsers = async (req, res) => {
   try {
-    const allUsers = await UserData.find();
+    const allUsers = await UserData.find().sort({ createdAt: -1 });
     if (allUsers.length == 0) {
       return res
         .status(200)
@@ -254,7 +254,7 @@ const getAllUsers = async (req, res) => {
 
 const getAllDisburmentLoans = async (req, res) => {
   try {
-    const allLeads = await LoanDisburseModel.find();
+    const allLeads = await LoanDisburseModel.find().sort({ createdAt: -1 }).populate("user");
     if (allLeads.length == 0) {
       res
         .status(200)
@@ -282,7 +282,7 @@ const getAllDisburmentLoans = async (req, res) => {
 
 const getAllApprovalLoans = async (req, res) => {
   try {
-    const allLeads = await LoanApproveModel.find();
+    const allLeads = await LoanApproveModel.find().sort({ createdAt: -1 }).populate("user");
     if (allLeads.length == 0) {
       res
         .status(200)
@@ -606,6 +606,46 @@ const updateEmpLead = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+// check unique lead
+const checkUniqueLead = async (req, res) => {
+  try {
+    const { number, pancard, aadhar } = req.body;
+
+    const existingLead = await UserLead.findOne({
+      $or: [
+        { mobileNumber: number },
+        { panCard: pancard },
+        { aadhar_card: aadhar }
+      ]
+    });
+
+    if (!existingLead) {
+      res.status(200).json({
+        message: "New Lead Found",
+        status: "success",
+        code: 200
+      });
+    } else {
+      res.status(200).json({ 
+        message: "Lead already exists", 
+        status: "fail", 
+        code: 400 
+      });
+    }
+  } catch (error) {
+    console.error("Error checking for unique lead:", error);
+    res.status(200).json({
+      message: "Internal server error",
+      status: "error",
+      code: 500
+    });
+  }
+};
+
+
+
+
+
 // controller function to update-amount-in-all-tables.
 const updateAmountFields = async (req, res) => {
   try {
@@ -1186,7 +1226,11 @@ const updateLeadStatus = async (req, res) => {
 // controller function to get-all-leads
 const getAllLeads = async (req, res) => {
   try {
-    const allLeads = await UserLead.find().populate("user");
+    
+    const allLeads = await UserLead.find().sort({ createdAt: -1 }).populate("user");
+    console.log(allLeads); // Log the raw results to check the order
+
+
     if (allLeads.length == 0) {
       res
         .status(200)
@@ -1199,7 +1243,7 @@ const getAllLeads = async (req, res) => {
         data: allLeads,
       });
     }
-  } catch (error) {
+  } catch (error) { 
     console.error(error);
     if (error instanceof mongoose.Error.CastError) {
       return res
@@ -1320,6 +1364,49 @@ const getClosedLoanDetails = async (req, res) => {
   }
 };
 
+const getLeadEmi = async (req,res) => {
+
+  try{
+    const {leadId,emi_tenure} = req.body;
+    const lead = await UserLead.findById(leadId);
+    if(lead){
+      const P = parseFloat(lead.leadAmount);
+      const R = parseFloat(lead.lead_interest_rate) / 100 / 12; // Monthly interest rate
+      const N = parseFloat(emi_tenure);
+
+      // Flat EMI Calculation
+      const monthlyInterest = P * R;
+      const totalInterest = monthlyInterest * N;
+      const EMI = (P + totalInterest) / N;
+      const totalAmount = EMI * N;
+      console.log(req.body);
+     
+      return res
+        .status(200)
+        .json({
+          code: 200,
+          status: "success",
+          message: "Emi Details",
+          monthly_interest : monthlyInterest,
+          total_interest : totalInterest,
+          emi_amount : EMI,
+          total_amount : totalAmount,
+          payment_array : emiPaymentArray
+        });
+
+    }else{
+      return res
+        .status(200)
+        .json({ code: 400, status: "fail", message: "Lead not found" });
+    }
+
+   
+  }catch(error){
+    console.log(error);
+  }
+
+
+}
 // controller function to get-lead-by-id
 const getLeadDetails = async (req, res) => {
   try {
@@ -1373,6 +1460,8 @@ const createLead = async (req, res) => {
   try {
     const { userId, mobileNumber, pancard, aadhar_card } = req.body; // Get lead data from the request body
     console.log(req.body);
+    const leadCount = await UserLead.find();
+
 
     // Check if userId is valid
     const user = await UserData.findById(userId);
@@ -1386,6 +1475,7 @@ const createLead = async (req, res) => {
       pancard: pancard,
       aadhar_card: aadhar_card,
     });
+    
 
     if (existingLead.length != 0) {
       return res
@@ -1396,7 +1486,10 @@ const createLead = async (req, res) => {
     // Create a new UserLead document
     const newLead = new UserLead(req.body);
     newLead.user = userId;
+    newLead.generated_loan_id = 'GS-LOAN-'+leadCount.length+1;
 
+    // const initialCounter = new Counter({ _id: 'userLeadId', seq: 0 });
+    // await initialCounter.save();
     // Save the lead to the database
     const savedLead = await newLead.save();
 
@@ -1474,9 +1567,433 @@ const deleteApprovalLoan = async (req, res) => {
   }
 };
 
+const getAllUserApprovedLeads = async (req,res) => {
+  
+  try {
+    const userLead = await UserLead.find({ user: req.body.userId, lead_status : 'APPROVED' });
+    if (userLead.length != 0) {
+      return res
+        .status(200)
+        .json({
+          status: "success",
+          code: 200,
+          message: "User Leads Fetched successfully !",
+          data: userLead,
+        });
+    } else {
+      return res
+        .status(200)
+        .json({ status: "fail", code: 400, message: "No User Leads found !" });
+    }
+  } catch (error) {
+    console.log(error);
+    if (error instanceof mongoose.Error.CastError) {
+      return res
+        .status(200)
+        .json({ status: "fail", code: 200, error: "Invalid user ID format" });
+    }
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+
+
+}
+
+const searchUserLeadsByDate = async(req,res) => {
+
+
+  try {
+    const { userId, fromDate, toDate } = req.body;
+
+    // Date Validation (Ensure valid date formats)
+    const startDate = new Date(fromDate);
+    const endDate = new Date(toDate);
+
+    if (isNaN(startDate) || isNaN(endDate)) {
+        return res.status(400).json({ error: 'Invalid date format. Please use YYYY-MM-DD' });
+    }
+
+    // Query Logic
+    const leads = await UserLead.find({
+        user: userId,
+        createdAt: {
+            $gte: startDate,   // Greater than or equal to fromDate
+            $lte: endDate,    // Less than or equal to toDate
+        },
+    });
+
+    res.json({status : 'success',code : 200,message : 'User-Filtered-Leads-Date',data : leads});
+} catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+}
+
+}
+
+const searchUserLeads = async (req,res) => {
+
+
+  try {
+    const userId = req.body.userId;
+    const queryText = req.body.queryText;
+
+    // Search Logic (Case-Insensitive)
+    const leads = await UserLead.find({
+        user: userId,
+        $or: [
+            { firstName: { $regex: queryText, $options: 'i' } }, // Case-insensitive search
+        ],
+    });
+
+    res.json({status : 'success',code : 200, message : 'User-Filtered-Leads-Text',data : leads});
+} catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+}
+
+
+}
+const searchUserLeadsByStatus = async (req,res) => {
+  try {
+    const { userId, status } = req.body;
+
+    // Input Validation (Optional but recommended)
+    if (!userId || !status) {
+        return res.status(400).json({ error: 'userId and status are required' });
+    }
+    if (!['EMPTY','PENDING','APPROVED','REJECTED','DISBURSED'].includes(status)){
+        return res.status(400).json({ error: 'Invalid status value'});
+    }
+
+    // Query Logic
+    const leads = await UserLead.find({
+        user: userId,
+        lead_status: status,
+    });
+
+    res.json({status : 'success',code : 200, message : 'User-Filtered-Leads-Status',data : leads});
+} catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+}
+
+
+
+}
+///Changes by rishi
+const getLeadsByDateAndStatusName = async (req, res) => {
+  try {
+    const { fromDate, toDate, lead_status, firstName } = req.body;
+
+    // Parse the dates from YYYY-MM-DD format
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+
+    // Set the 'to' date to the end of the day
+    to.setHours(23, 59, 59, 999);
+
+    let query = {
+      createdAt: {
+        $gte: from,
+        $lte: to
+      }
+    };
+
+    // Add lead_status to query if provided
+    if (lead_status) {
+      query.lead_status = lead_status;
+    }
+
+    // Add firstName filter using regex if provided
+    if (firstName) {
+      query.firstName = { $regex: firstName, $options: 'i' }; // 'i' makes it case-insensitive
+    }
+
+    // Execute the query
+    const leads = await UserLead.find(query);
+
+    if (leads.length ===0) {
+      return res.status(200).json({
+        status: 'Failed',
+        code: 404,
+        message: 'No Lead found'
+      });
+    }
+
+    res.json({
+      status: 'success',
+      code: 200,
+      message: 'filtered-leads',
+      data: leads
+    });
+  } catch (error) {
+    res.json({
+      status: 'Failed',
+      code: 500,
+      message: error.message
+    });
+  }
+};
+//New to sort month
+const getLeadsByCurrentMonth = async (req, res) => {
+  try {
+    const { month } = req.body;
+
+    // Validate month input
+    if (!month || isNaN(month)) {
+      return res.status(200).json({
+        status: 'Failed',
+        code: 400,
+        message: 'Please provide a valid month.'
+      });
+    }
+
+    // Get the current year
+    const currentYear = new Date().getFullYear();
+
+    // Parse month and current year into a Date object
+    const fromDate = new Date(currentYear, month - 1, 1); // Month is zero-based in JavaScript
+    const toDate = new Date(currentYear, month, 0); // Get the last day of the month
+
+    // Find leads within the specified date range
+    const leads = await UserLead.find({
+      createdAt: {
+        $gte: fromDate,
+        $lte: toDate
+      }
+    });
+    if (leads.length ===0) {
+      return res.status(200).json({
+        status: 'Failed',
+        code: 404,
+        message: 'No Lead found'
+      });
+    }
+
+    res.json({
+      status: 'success',
+      code: 200,
+      message: 'leads-by-current-and-month',
+      data: leads
+    });
+  } catch (error) {
+    res.status(200).json({
+      status: 'Failed',
+      code: 500,
+      message: error.message
+    });
+  }
+};
+//Filter on approve lead by Date
+const getApproveLeadByDate = async (req, res) => {
+  try {
+    const { fromDate, toDate } = req.body;
+    
+    // Parse the dates from YYYY-MM-DD format
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+    
+    // Set the 'to' date to the end of the day
+    to.setHours(23, 59, 59, 999);
+
+    const loans = await LoanApproveModel.find();
+
+    const filteredloans = loans.filter(lead => {
+      const createdAt = new Date(lead.createdAt);
+      return createdAt >= from && createdAt <= to;
+    });
+
+    if (filteredloans.length === 0 ) {
+      return res.status(200).json({
+        status: 'Failed',
+        code: 404,
+        message: 'No Approved Loan found'
+      });
+    }
+
+    res.json({
+      status: 'success',
+      code: 200,
+      message: 'filtered-Approved-loans',
+      data: filteredloans
+    });
+  } catch (error) {
+    res.json({
+      status: 'Failed',
+      code: 500,
+      message: error.message
+    });
+  }
+};
+const getDisburseLeadByDate = async (req, res) => {
+  try {
+    const { fromDate, toDate } = req.body;
+    
+    // Parse the dates from YYYY-MM-DD format
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+    
+    // Set the 'to' date to the end of the day
+    to.setHours(23, 59, 59, 999);
+
+    const loans = await LoanDisburseModel.find();
+
+    const filteredloans = loans.filter(lead => {
+      const createdAt = new Date(lead.createdAt);
+      return createdAt >= from && createdAt <= to;
+    });
+
+    if (filteredloans.length === 0 ) {
+      return res.status(200).json({
+        status: 'Failed',
+        code: 404,
+        message: 'No Disbursed Loan found'
+      });
+    }
+
+    res.json({
+      status: 'success',
+      code: 200,
+      message: 'filtered-Disbursed-loans',
+      data: filteredloans
+    });
+  } catch (error) {
+    res.json({
+      status: 'Failed',
+      code: 500,
+      message: error.message
+    });
+  }
+};
+const getRejectedLeadByDate = async (req, res) => {
+  try {
+    const { fromDate, toDate } = req.body;
+    
+    // Parse the dates from YYYY-MM-DD format
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+    
+    // Set the 'to' date to the end of the day
+    to.setHours(23, 59, 59, 999);
+
+    const loans = await LoanRejectedModel.find();
+
+    const filteredloans = loans.filter(lead => {
+      const createdAt = new Date(lead.createdAt);
+      return createdAt >= from && createdAt <= to;
+    });
+
+    if (filteredloans.length === 0 ) {
+      return res.status(200).json({
+        status: 'Failed',
+        code: 404,
+        message: 'No Rejected Loan found'
+      });
+    }
+
+    res.json({
+      status: 'success',
+      code: 200,
+      message: 'filtered-Rejected-loans',
+      data: filteredloans
+    });
+  } catch (error) {
+    res.json({
+      status: 'Failed',
+      code: 500,
+      message: error.message
+    });
+  }
+};
+const getOngoingLeadByDate = async (req, res) => {
+  try {
+    const { fromDate, toDate } = req.body;
+    
+    // Parse the dates from YYYY-MM-DD format
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+    
+    // Set the 'to' date to the end of the day
+    to.setHours(23, 59, 59, 999);
+
+    const loans = await LoanOngoingModel.find();
+
+    const filteredloans = loans.filter(lead => {
+      const createdAt = new Date(lead.createdAt);
+      return createdAt >= from && createdAt <= to;
+    });
+
+    if (filteredloans.length === 0 ) {
+      return res.status(200).json({
+        status: 'Failed',
+        code: 404,
+        message: 'No Ongoing Loan found'
+      });
+    }
+
+    res.json({
+      status: 'success',
+      code: 200,
+      message: 'filtered-Ongoing-loans',
+      data: filteredloans
+    });
+  } catch (error) {
+    res.json({
+      status: 'Failed',
+      code: 500,
+      message: error.message
+    });
+  }
+};
+const getclosedLeadByDate = async (req, res) => {
+  try {
+    const { fromDate, toDate } = req.body;
+    
+    // Parse the dates from YYYY-MM-DD format
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+    
+    // Set the 'to' date to the end of the day
+    to.setHours(23, 59, 59, 999);
+
+    const loans = await LoanClosedModel.find();
+
+    const filteredloans = loans.filter(lead => {
+      const createdAt = new Date(lead.createdAt);
+      return createdAt >= from && createdAt <= to;
+    });
+
+    if (filteredloans.length === 0 ) {
+      return res.status(200).json({
+        status: 'Failed',
+        code: 404,
+        message: 'No Closed Loan found'
+      });
+    }
+
+    res.json({
+      status: 'success',
+      code: 200,
+      message: 'filtered-Closed-loans',
+      data: filteredloans
+    });
+  } catch (error) {
+    res.json({
+      status: 'Failed',
+      code: 500,
+      message: error.message
+    });
+  }
+};
+
+
+
+
+
+
+
 const getAllUserLeads = async (req, res) => {
   try {
-    const userLead = await UserLead.find({ user: req.body.userId });
+    const userLead = await UserLead.find({ user: req.body.userId }).sort({ createdAt: -1 });
     if (userLead.length != 0) {
       return res.status(200).json({
         status: "success",
@@ -1527,7 +2044,7 @@ const getAllUserVisits = async (req, res) => {
 
 const getAllVisits = async (req, res) => {
   try {
-    const userLead = await UserVisit.find();
+    const userLead = await UserVisit.find().sort({ createdAt: -1 }).populate("user");
     if (userLead != null && userLead.length != 0) {
       return res.status(200).json({
         status: "success",
@@ -1783,7 +2300,7 @@ const deleteOnGoingLoan = async (req, res) => {
 // controller function to get-all-attendance.
 const getAllAttendance = async (req, res) => {
   try {
-    const allAttendance = await UserAttendance.find();
+    const allAttendance = await UserAttendance.find().sort({ createdAt: -1 }).populate("user");
     if (allAttendance.length != 0) {
       return res.status(200).json({
         status: "success",
@@ -1863,6 +2380,9 @@ const createVisit = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+
+
 
 // Controller function for user registration
 
@@ -2000,6 +2520,7 @@ module.exports = {
   getAllUserLeads,
   getAllVisits,
   getUserAttendance,
+  getAllUserApprovedLeads,  
   createAttendance,
   updateLoanApprovalStatus,
   updateDisbursalLoanStatus,
@@ -2018,7 +2539,7 @@ module.exports = {
   getAllRejectedLoans,
   getClosedLoanDetails,
   closeOnGoingLoan,
-
+  getLeadEmi,
   uploadFile,
   getAllApprovalLoans,
   deleteApprovalLoan,
@@ -2034,6 +2555,7 @@ module.exports = {
   updateAmountFields,
 
   updateEmpLead,
+  checkUniqueLead,
 
   getAllUserVisits,
   getAllAttendance,
@@ -2042,4 +2564,15 @@ module.exports = {
   createVisit,
   deleteVisit,
   updateEmiPayment,
+  searchUserLeads,
+  searchUserLeadsByDate,
+  searchUserLeadsByStatus,
+  getLeadsByDateAndStatusName,
+  getLeadsByCurrentMonth,
+  getApproveLeadByDate,
+  getDisburseLeadByDate,
+  getRejectedLeadByDate,
+  getOngoingLeadByDate,
+  getclosedLeadByDate
+
 };

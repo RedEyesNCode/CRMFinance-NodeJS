@@ -34,6 +34,14 @@ app.post('/create-lead',createLead);
 app.post('/create-visit',user.createVisit)
 app.post('/update-lead-status',updateLeadStatus);
 app.get('/get-all-leads',getAllLeads);
+app.post('/filter-leads-Date_Status_Name',user.getLeadsByDateAndStatusName);//Rishi
+app.post('/filter-leads-by-month',user.getLeadsByCurrentMonth);//Rishi
+app.post('/filter-approveLoan-by-date',user.getApproveLeadByDate);//Rishi
+app.post('/filter-disburseLoan-by-date',user.getDisburseLeadByDate);//Rishi
+app.post('/filter-rejectedLoan-by-date',user.getRejectedLeadByDate);//Rishi
+app.post('/filter-ongoingLoan-by-date',user.getOngoingLeadByDate);//Rishi
+app.post('/filter-closedLoan-by-date',user.getclosedLeadByDate);//Rishi
+
 app.post('/get-lead-details',user.getLeadDetails);
 
 app.get('/get-all-users',getAllUsers);
@@ -45,6 +53,12 @@ app.post('/delete-user',deleteUser);
 app.post('/delete-visit',deleteVisit);
 app.post('/delete-lead',deleteLead);
 app.post('/get-user-leads',getAllUserLeads);
+app.post('/search-user-lead-by-name',user.searchUserLeads);
+app.post('/search-user-lead-by-date-status',user.searchUserLeadsByStatus)
+app.post('/get-user-approved-leads',user.getAllUserApprovedLeads);
+
+app.post('/check-unique-lead',user.checkUniqueLead);
+
 app.post('/get-user-visit',getAllUserVisits);
 app.post('/create-attendance',user.createAttendance);
 app.post('/delete-attendance',user.deleteAttendance);
@@ -52,6 +66,8 @@ app.post('/get-user-attendance',user.getUserAttendance);
 app.get('/get-all-attendance',user.getAllAttendance);
 app.post('/upload-file',uploadMiddleWare.single('file'),user.uploadFile);
 app.post('/upload-lead-pdf',uploadMiddleWare.single('cibil_pdf'),user.uploadLeadCibilPdf);
+
+app.post('/get-lead-emi',user.getLeadEmi);
 
 // extra modules & tables.
 app.get('/get-all-approval-loans',user.getAllApprovalLoans);
