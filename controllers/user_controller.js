@@ -228,6 +228,52 @@ const deleteUser = async (req, res) => {
   }
 };
 
+// controller function to get-all-users-with-total-collection amount
+const getAllUserTotalAmount = async (req, res) => {
+  try {
+    const allUsers = await UserData.find().sort({ createdAt: -1 }); // Get all users
+
+    const usersWithTotalCollectionAmount = await Promise.all(
+      allUsers.map(async (user) => {
+        const totalCollectionAmount = await UserCollection.aggregate([
+          { $match: { user: user._id } }, // Filter collections by user
+          {
+            $group: {
+              _id: null, // Single group for total
+              total: { $sum: { $toInt: "$collection_amount" } }, // Sum amounts, converting to integers
+            },
+          },
+        ]);
+
+        return {
+          ...user.toObject(), // Convert Mongoose document to plain object
+          totalCollectionAmount: totalCollectionAmount.length ? totalCollectionAmount[0].total : 0,
+        };
+      })
+    );
+
+    if (allUsers.length == 0) {
+      return res.status(200).json({ status: "fail", code: 400, message: "No users found !" });
+    } else {
+      return res.status(200).json({
+        status: "success",
+        code: 200,
+        message: "all-app-users",
+        data: usersWithTotalCollectionAmount,
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    if (error instanceof mongoose.Error.CastError) {
+      return res.status(200).json({ status: "fail", code: 200, error: "Invalid user ID format" });
+    }
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+
+
+
 // controller function to get-all-users
 const getAllUsers = async (req, res) => {
   try {
@@ -1937,6 +1983,8 @@ const createUserCollection = async (req,res) => {
     if(user!=null){
       const newUserCollection = new UserCollection(req.body);
       newUserCollection.user = req.body.userId;
+      newUserCollection.generated_emi_bill = "";
+
 
       const saved = await newUserCollection.save();
       
@@ -2774,6 +2822,7 @@ module.exports = {
   getOngoingLoanDetail,
 
   deleteRejectedLoan,
+  getAllUserTotalAmount,
   calculateTotals,
 
   getAllRejectedLoans,
