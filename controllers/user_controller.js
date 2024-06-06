@@ -13,6 +13,9 @@ const LoanRejectedModel = require("../models/loan_rejected_model");
 const RecycleBin = require("../models/recycler_bin");
 const LoanClosedModel = require("../models/loan_closed_model");
 const EmiPaymentSchedule = require("../models/emi_payment_schedule");
+const UserCollection = require("../models/user_collection_model");
+const LRU = require('lru-cache').LRU; // Import the LRU class specifically
+
 
 function makeid(length) {
   let result = "";
@@ -1224,35 +1227,80 @@ const updateLeadStatus = async (req, res) => {
 };
 
 // controller function to get-all-leads
+// const getAllLeads = async (req, res) => {
+
+//   try {
+
+//     const allLeads = await UserLead.find().sort({ createdAt: -1 }).populate("user");
+    
+//     console.log(allLeads); // Log the raw results to check the order
+
+
+//     if (allLeads.length == 0) {
+//       res
+//         .status(200)
+//         .json({ status: "fail", code: 200, error: "No Leads Exists" });
+//     } else {
+//       res.status(200).json({
+//         status: "success",
+//         code: 200,
+//         message: "all-admin-leads",
+//         data: allLeads,
+//       });
+//     }
+//   } catch (error) { 
+//     console.error(error);
+//     if (error instanceof mongoose.Error.CastError) {
+//       return res
+//         .status(200)
+//         .json({ status: "fail", code: 200, error: "Invalid user ID format" });
+//     }
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// };
 const getAllLeads = async (req, res) => {
   try {
-    
-    const allLeads = await UserLead.find().sort({ createdAt: -1 }).populate("user");
-    console.log(allLeads); // Log the raw results to check the order
+    const page = parseInt(req.body.page) || 1;  
+    const limit = parseInt(req.body.limit) || 100; 
 
+    const skip = (page - 1) * limit;
 
-    if (allLeads.length == 0) {
-      res
-        .status(200)
-        .json({ status: "fail", code: 200, error: "No Leads Exists" });
+    const allLeads = await UserLead.find()
+      .sort({ createdAt: -1 })
+      .populate("user")
+      .skip(skip) // Apply skip to exclude previous results
+      .limit(limit);
+
+    const totalLeads = await UserLead.countDocuments();
+    res.setHeader('Cache-Control', 'private, max-age=60'); // Cache for 60 seconds (adjust as needed)
+
+    if (allLeads.length === 0) {
+      res.status(200).json({ status: "fail", code: 200, error: "No Leads Exists" });
     } else {
       res.status(200).json({
         status: "success",
         code: 200,
         message: "all-admin-leads",
         data: allLeads,
+        currentPage: page,
+        totalCount : totalLeads,
+        
+        totalPages: Math.ceil(totalLeads / limit), // Calculate total pages
       });
     }
-  } catch (error) { 
+  } catch (error) {
     console.error(error);
     if (error instanceof mongoose.Error.CastError) {
-      return res
-        .status(200)
-        .json({ status: "fail", code: 200, error: "Invalid user ID format" });
+      return res.status(200).json({ status: "fail", code: 200, error: "Invalid user ID format" });
     }
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+
+
+
+
 const getDisbursalLoanDetail = async (req, res) => {
   try {
     const { disbursal_loan_id } = req.body;
@@ -1453,6 +1501,33 @@ const getLoanApprovalDetails = async (req, res) => {
     console.log(error);
   }
 };
+const deleteUserCollection = async(req,res)=>{
+
+  try{
+    const collection = await UserCollection.findById(req.body.collection_id);
+    if(collection){
+      await collection.deleteOne();
+      return res.status(200).json({
+        status: "200",
+        code: 200,
+        message: "Collection Deleted Successfully !",
+      });
+
+    }else{
+      return res.status(200).json({
+        status: "200",
+        code: 200,
+        message: "Collection Not Found !",
+      });
+
+    }
+    
+  }catch(error){
+    console.log(error);
+  }
+
+
+}
 
 // controller function to create-lead
 
@@ -1486,14 +1561,14 @@ const createLead = async (req, res) => {
     // Create a new UserLead document
     const newLead = new UserLead(req.body);
     newLead.user = userId;
-    newLead.generated_loan_id = 'GS-LOAN-'+leadCount.length+1;
+    newLead.generated_loan_id = 'GS '+leadCount.length+1;
 
     // const initialCounter = new Counter({ _id: 'userLeadId', seq: 0 });
     // await initialCounter.save();
     // Save the lead to the database
     const savedLead = await newLead.save();
 
-    return res.status(201).json({
+    return res.status(200).json({
       status: "200",
       code: 200,
       message: "Lead created successfully!",
@@ -1733,6 +1808,96 @@ const getLeadsByDateAndStatusName = async (req, res) => {
     });
   }
 };
+const updateUserCollection = async (req,res) => {
+  try{
+    const collection = await UserCollection.findById(req.body.collection_id);
+    if(collection){
+      if(req.body.status==="APPROVED"){
+        collection.collection_status = req.body.status;
+    
+        const updatedCollectionAmount = Number(collection.collection_amount)-Number(req.body.approved_collection_amount);
+        collection.amount = updatedCollectionAmount;
+        await collection.save();
+        res.status(200).json({
+          status: 'success',
+          code: 200,
+          message: 'You have approved the employee collection',
+          data : collection
+        });
+
+
+      
+      }else{
+        collection.collection_status = req.body.status;
+        await collection.save();
+        res.status(200).json({
+          status: 'success',
+          code: 200,
+          message: 'You have rejected the employee collection',
+        });
+
+
+      }
+
+    }else{
+      res.status(200).json({
+        status: 'fail',
+        code: 200,
+        message: 'User Collection Not Found !',
+      });
+    }
+
+  }catch(error){
+    console.log(error)
+  }
+
+
+}
+
+
+
+
+
+const createUserCollection = async (req,res) => {
+  try{
+    const user = await UserData.findById(req.body.userId);
+    if(!user){
+      const newUserCollection = new UserCollection(req.body);
+      const saved = await newUserCollection.save();
+      
+      res.status(200).json({
+        status: 'fail',
+        code: 200,
+        message: 'User Collection Recorded Successfully !',
+        data : saved
+      });
+      
+    }else{
+      res.status(200).json({
+        status: 'fail',
+        code: 200,
+        message: 'User not found !',
+      });
+
+    }
+
+  }catch(error){
+    console.log(error)
+    res.status(200).json({
+      status: 'fail',
+      code: 500,
+      message: 'Internal Server Error',
+    });
+
+  }
+
+
+
+}
+
+
+
+
 //New to sort month
 const getLeadsByCurrentMonth = async (req, res) => {
   try {
@@ -2583,6 +2748,9 @@ module.exports = {
   getDisburseLeadByDate,
   getRejectedLeadByDate,
   getOngoingLeadByDate,
-  getclosedLeadByDate
+  getclosedLeadByDate,
+  createUserCollection,
+  updateUserCollection,
+  deleteUserCollection
 
 };
