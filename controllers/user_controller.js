@@ -15,6 +15,11 @@ const LoanClosedModel = require("../models/loan_closed_model");
 const EmiPaymentSchedule = require("../models/emi_payment_schedule");
 const UserCollection = require("../models/user_collection_model");
 const LRU = require('lru-cache').LRU; // Import the LRU class specifically
+const fs = require('fs');
+const { jsPDF } = require('jspdf');
+const { GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3'); // Import for S3 GetObjectCommand
+const { S3Client } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");  // Import getSignedUrl
 
 
 function makeid(length) {
@@ -1976,24 +1981,87 @@ const getUserCollection = async (req,res) => {
 
 
 }
+const s3 = new S3Client({
+  credentials: {
+    secretAccessKey:'f6/nS6glE8s9aeW3c0QVzxjcRY1Co/ATdNdAVhXw',
+    accessKeyId:'AKIA4MTWKENW4EBCBQNF'
+  },
+  region:'ap-south-1'
+})
+async function getS3FileUrl(key) {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: 'androidbucket3577',
+      Key: key,
+    });
+    
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 }); // Get presigned URL, valid for 1 hour
+    return url;
+  } catch (error) {
+    console.error("Error getting S3 URL:", error);
+    throw error; // Or handle the error as needed
+  }
+}
 
 const createUserCollection = async (req,res) => {
   try{
     const user = await UserData.findById(req.body.userId);
     if(user!=null){
-      const newUserCollection = new UserCollection(req.body);
-      newUserCollection.user = req.body.userId;
-      newUserCollection.generated_emi_bill = "";
-
-
-      const saved = await newUserCollection.save();
       
-      res.status(200).json({
-        status: 'fail',
-        code: 200,
-        message: 'User Collection Recorded Successfully !',
-        data : saved
-      });
+    uploadMiddleWare.single('file')(req, res, async (err) => { 
+      if (err) {
+        // ... (your error handling for file upload errors)
+        res.status(200).json({
+          status: 'fail',
+          code: 200,
+          message: 'User not found !',
+          error : err,
+        });
+      } else {
+        // ... (your existing code to find the user and save the newUserCollection)
+        const newUserCollection = new UserCollection(req.body);
+        newUserCollection.user = req.body.userId;
+        newUserCollection.generated_emi_bill = "";
+        await newUserCollection.save();
+        
+        
+        const pdf = new jsPDF();
+        pdf.text(
+          `EMI Bill Details:\n\n${JSON.stringify(req.body, null, 2)}`, // Or format the data as you wish
+          10, 10
+        );
+        const pdfBuffer = pdf.output('arraybuffer');
+        const s3Key = `emi_bills/${Date.now()}_bill.pdf`; // Unique name
+        await s3.send(new PutObjectCommand({
+          Bucket: 'androidbucket3577',
+          Key: s3Key,
+          Body: pdfBuffer,
+          ContentType: 'application/pdf',
+        }));
+        // Get the S3 URL
+        const s3Url = await getS3FileUrl(s3Key);
+
+        // Update the collection with the S3 URL
+        newUserCollection.generated_emi_bill = s3Url;
+        await newUserCollection.save();
+        // ... rest of your code
+        res.status(200).json({
+          status: 'success',
+          code: 200,
+          message: 'User Collection Recorded Successfully !',
+          data : newUserCollection
+        });
+      }
+    });
+   
+
+
+
+
+
+
+      
+      
       
     }else{
       res.status(200).json({
