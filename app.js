@@ -42,6 +42,15 @@ app.post('/filter-rejectedLoan-by-date',user.getRejectedLeadByDate);//Rishi
 app.post('/filter-ongoingLoan-by-date',user.getOngoingLeadByDate);//Rishi
 app.post('/filter-closedLoan-by-date',user.getclosedLeadByDate);//Rishi
 
+
+app.post('/create-user-collection',user.createUserCollection);
+app.post('/update-user-collection',user.updateUserCollection);
+app.post('/delete-user-collection',user.deleteUserCollection);
+
+
+
+
+
 app.post('/get-lead-details',user.getLeadDetails);
 
 app.get('/get-all-users',getAllUsers);
