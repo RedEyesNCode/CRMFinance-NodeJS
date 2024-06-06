@@ -33,7 +33,7 @@ app.post('/update-mpass',updateMpass);
 app.post('/create-lead',createLead);
 app.post('/create-visit',user.createVisit)
 app.post('/update-lead-status',updateLeadStatus);
-app.get('/get-all-leads',getAllLeads);
+app.post('/get-all-leads',getAllLeads);
 app.post('/filter-leads-Date_Status_Name',user.getLeadsByDateAndStatusName);//Rishi
 app.post('/filter-leads-by-month',user.getLeadsByCurrentMonth);//Rishi
 app.post('/filter-approveLoan-by-date',user.getApproveLeadByDate);//Rishi
