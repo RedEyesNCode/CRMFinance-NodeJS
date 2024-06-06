@@ -1727,25 +1727,63 @@ const searchUserLeads = async (req,res) => {
 
 
 }
+
+
+
+
+
+
 const searchUserLeadsByStatus = async (req,res) => {
   try {
-    const { userId, status } = req.body;
+    const { fromDate, toDate, lead_status, userId } = req.body;
+   // Input Validation (Optional but recommended)
+   if (!userId || !lead_status) {
+    return res.status(400).json({ error: 'userId and status are required' });
+}
+if (!['EMPTY','PENDING','APPROVED','REJECTED','DISBURSED'].includes(status)){
+    return res.status(400).json({ error: 'Invalid status value'});
+}
+    // Parse the dates from YYYY-MM-DD format
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
 
-    // Input Validation (Optional but recommended)
-    if (!userId || !status) {
-        return res.status(400).json({ error: 'userId and status are required' });
+    // Set the 'to' date to the end of the day
+    to.setHours(23, 59, 59, 999);
+
+    let query = {
+      user : userId,
+
+      createdAt: {
+        $gte: from,
+        $lte: to
+      }
+    };
+    if (lead_status) {
+      query.lead_status = lead_status;
     }
-    if (!['EMPTY','PENDING','APPROVED','REJECTED','DISBURSED'].includes(status)){
-        return res.status(400).json({ error: 'Invalid status value'});
+    // Execute the query
+    const leads = await UserLead.find(query);
+
+    if (leads.length ===0) {
+      return res.status(200).json({
+        status: 'Failed',
+        code: 404,
+        message: 'No Lead found'
+      });
     }
 
-    // Query Logic
-    const leads = await UserLead.find({
-        user: userId,
-        lead_status: status,
+    res.json({
+      status: 'success',
+      code: 200,
+      message: 'filtered-leads',
+      data: leads
     });
 
-    res.json({status : 'success',code : 200, message : 'User-Filtered-Leads-Status',data : leads});
+ 
+
+    // Query Logic
+    
+
 } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });
@@ -1856,13 +1894,50 @@ const updateUserCollection = async (req,res) => {
 
 
 
+const getUserCollection = async (req,res) => {
+  try{
+    const userCollections = await UserCollection.find({ user: req.body.userId }).sort({ createdAt: -1 });
+    if(userCollections.length===0){
+      res.status(200).json({
+        status: 'fail',
+        code: 200,
+        message: 'User Collection Not Found !',
+      });
+     
 
+    }else{
+      
+      res.status(200).json({
+        status: 'fail',
+        code: 200,
+        message: 'User Collection Records !',
+        data : userCollections
+      });
+    }
+
+
+  }catch(error){
+
+    res.status(200).json({
+      status: 'fail',
+      code: 500,
+      message: 'Internal Server Error',
+    });
+
+    console.log(error);
+
+  }
+
+
+}
 
 const createUserCollection = async (req,res) => {
   try{
     const user = await UserData.findById(req.body.userId);
-    if(!user){
+    if(user!=null){
       const newUserCollection = new UserCollection(req.body);
+      newUserCollection.user = req.body.userId;
+
       const saved = await newUserCollection.save();
       
       res.status(200).json({
@@ -2741,6 +2816,8 @@ module.exports = {
   getclosedLeadByDate,
   createUserCollection,
   updateUserCollection,
-  deleteUserCollection
+  deleteUserCollection,
+  getUserCollection,
+
 
 };

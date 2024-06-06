@@ -44,6 +44,8 @@ app.post('/filter-closedLoan-by-date',user.getclosedLeadByDate);//Rishi
 
 
 app.post('/create-user-collection',user.createUserCollection);
+app.post('/get-user-collection',user.getUserCollection);
+
 app.post('/update-user-collection',user.updateUserCollection);
 app.post('/delete-user-collection',user.deleteUserCollection);
 
