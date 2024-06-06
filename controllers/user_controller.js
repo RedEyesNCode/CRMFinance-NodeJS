@@ -1786,7 +1786,7 @@ const getLeadsByCurrentMonth = async (req, res) => {
 //Filter on approve lead by Date
 const getApproveLeadByDate = async (req, res) => {
   try {
-    const { fromDate, toDate } = req.body;
+    const { fromDate, toDate,firstName } = req.body;
     
     // Parse the dates from YYYY-MM-DD format
     const from = new Date(fromDate);
@@ -1794,15 +1794,20 @@ const getApproveLeadByDate = async (req, res) => {
     
     // Set the 'to' date to the end of the day
     to.setHours(23, 59, 59, 999);
+    let query = {
+      createdAt: {
+        $gte: from,
+        $lte: to
+      }
+    };
+    // Add firstName filter using regex if provided
+    if (firstName) {
+      query.firstName = { $regex: firstName, $options: 'i' }; // 'i' makes it case-insensitive
+    }
 
-    const loans = await LoanApproveModel.find();
+    const loans = await LoanApproveModel.find(query);
 
-    const filteredloans = loans.filter(lead => {
-      const createdAt = new Date(lead.createdAt);
-      return createdAt >= from && createdAt <= to;
-    });
-
-    if (filteredloans.length === 0 ) {
+    if (loans.length === 0 ) {
       return res.status(200).json({
         status: 'Failed',
         code: 404,
@@ -1814,7 +1819,7 @@ const getApproveLeadByDate = async (req, res) => {
       status: 'success',
       code: 200,
       message: 'filtered-Approved-loans',
-      data: filteredloans
+      data: loans
     });
   } catch (error) {
     res.json({
@@ -1826,7 +1831,7 @@ const getApproveLeadByDate = async (req, res) => {
 };
 const getDisburseLeadByDate = async (req, res) => {
   try {
-    const { fromDate, toDate } = req.body;
+    const { fromDate, toDate,firstName } = req.body;
     
     // Parse the dates from YYYY-MM-DD format
     const from = new Date(fromDate);
@@ -1834,15 +1839,20 @@ const getDisburseLeadByDate = async (req, res) => {
     
     // Set the 'to' date to the end of the day
     to.setHours(23, 59, 59, 999);
+    let query = {
+      createdAt: {
+        $gte: from,
+        $lte: to
+      }
+    };
+    // Add firstName filter using regex if provided
+    if (firstName) {
+      query.firstName = { $regex: firstName, $options: 'i' }; // 'i' makes it case-insensitive
+    }
 
-    const loans = await LoanDisburseModel.find();
+    const loans = await LoanDisburseModel.find(query);
 
-    const filteredloans = loans.filter(lead => {
-      const createdAt = new Date(lead.createdAt);
-      return createdAt >= from && createdAt <= to;
-    });
-
-    if (filteredloans.length === 0 ) {
+    if (loans.length === 0 ) {
       return res.status(200).json({
         status: 'Failed',
         code: 404,
@@ -1854,7 +1864,7 @@ const getDisburseLeadByDate = async (req, res) => {
       status: 'success',
       code: 200,
       message: 'filtered-Disbursed-loans',
-      data: filteredloans
+      data: loans
     });
   } catch (error) {
     res.json({
