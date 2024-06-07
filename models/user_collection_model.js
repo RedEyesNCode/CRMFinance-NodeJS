@@ -10,10 +10,13 @@ const DataSchema = new mongoose.Schema({
         required: true 
     },
     fullName: { type: String, default: "" },
-    gs_loan_number: { type: String, default: "" },
-    gs_loan_password: { type: String, default: "" },
+    customer_name : {type :String, default : ""},
+    customer_mobile : {type:String,default : ""},
+    customer_penalty : {type:String,default : ""},
+    customer_emi_id : {type:String,default : ""},
+    customer_loan_id : {type:String, default : ""},
+
    
-    gs_loan_userid: { type: String, default: "" } ,
     collection_amount: { type: String, default: "" } ,
     collection_location: { type: String, default: "" },
     collection_address: { type: String, default: "" },
