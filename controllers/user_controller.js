@@ -675,7 +675,7 @@ const checkUniqueLead = async (req, res) => {
       ]
     });
 
-    if (!existingLead) {
+    if (existingLead.length === 0) {
       res.status(200).json({
         message: "New Lead Found",
         status: "success",
