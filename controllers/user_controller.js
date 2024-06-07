@@ -2002,6 +2002,32 @@ async function getS3FileUrl(key) {
     throw error; // Or handle the error as needed
   }
 }
+function generatePDF(emiData) {
+  const doc = new jsPDF();
+
+  // Header
+  doc.setFontSize(20);
+  doc.text("Your Company Name", 10, 20);
+  // Add more header details and logo (doc.addImage) here
+  
+  // Customer Info Section
+  doc.setFontSize(12);
+  doc.text("EMI Bill Details", 10, 40);
+  doc.text(`Customer Name: ${emiData.customer_name}`, 10, 50);
+  // Add other customer details
+
+  // Bill Details Section
+  doc.text(`EMI Amount: ₹${emiData.collection_amount}`, 10, 80);
+  // Add penalty and total, format numbers for clarity
+
+  // Collection Location 
+  const locString = `Latitude: ${emiData.collection_location.split(',')[0]}, Longitude: ${emiData.collection_location.split(',')[1]}`;
+  doc.text(locString, 10, 110);
+
+  // Footer (Add payment instructions, etc.)
+
+  doc.save("emi_bill.pdf");
+}
 
 const createUserCollection = async (req,res) => {
   try{
@@ -2025,11 +2051,7 @@ const createUserCollection = async (req,res) => {
         await newUserCollection.save();
         
         
-        const pdf = new jsPDF();
-        pdf.text(
-          `EMI Bill Details:\n\n${JSON.stringify(req.body, null, 2)}`, // Or format the data as you wish
-          10, 10
-        );
+        const pdf = generatePDF(req.body);
         const pdfBuffer = pdf.output('arraybuffer');
         const s3Key = `emi_bills/${Date.now()}_bill.pdf`; // Unique name
         await s3.send(new PutObjectCommand({
