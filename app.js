@@ -28,6 +28,8 @@ const uploadMiddleWare = require("./aws/FileUpload");
 
 // routes
 app.post('/create-user', registerUser);
+app.post('/update-user',user.updateUser);
+
 app.post('/login-user',loginUser);
 app.post('/update-mpass',updateMpass);
 app.post('/create-lead',createLead);

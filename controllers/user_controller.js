@@ -665,7 +665,7 @@ const checkUniqueLead = async (req, res) => {
   try {
     const { number, pancard, aadhar } = req.body;
 
-    const existingLead = await UserLead.findOne({
+    const existingLead = await UserLead.find({
       $or: [
         { mobileNumber: number },
         { panCard: pancard },
@@ -2738,6 +2738,57 @@ const createVisit = async (req, res) => {
 };
 
 
+const updateUser = async (req, res) => {
+  try {
+    const { userId, fullName, telephoneNumber, mPass, empId } = req.body;
+
+    // 1. Find the user to update
+    const user = await UserData.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        status: "404",
+        code: 404,
+        message: "User not found",
+      });
+    }
+
+    // 2. Check for duplicate phone number (if changing)
+    if (
+      telephoneNumber &&
+      telephoneNumber !== user.telephoneNumber &&
+      (await UserData.findOne({ telephoneNumber }))
+    ) {
+      return res.status(400).json({
+        status: "400",
+        code: 400,
+        message: "Mobile number already exists",
+      });
+    }
+
+    // 3. Update user fields
+    user.fullName = fullName || user.fullName; // Update only if provided
+    user.telephoneNumber = telephoneNumber || user.telephoneNumber;
+    user.mpass = mPass;
+    user.employeeId = empId;
+
+
+    // 4. Save the updated user
+    const updatedUser = await user.save();
+
+    res.status(200).json({
+      status: "200",
+      code: 200,
+      message: "User updated successfully!",
+      data: updatedUser,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+
 
 
 // Controller function for user registration
@@ -2935,6 +2986,8 @@ module.exports = {
   updateUserCollection,
   deleteUserCollection,
   getUserCollection,
+  updateUser,
+
 
 
 };
