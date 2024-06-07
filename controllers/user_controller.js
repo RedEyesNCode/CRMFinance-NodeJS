@@ -17,10 +17,12 @@ const UserCollection = require("../models/user_collection_model");
 const LRU = require('lru-cache').LRU; // Import the LRU class specifically
 const fs = require('fs');
 const { jsPDF } = require('jspdf');
+const {autoTable} = require ('jspdf-autotable');
+const fetch = require('node-fetch-cjs');
+
 const { GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3'); // Import for S3 GetObjectCommand
 const { S3Client } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");  // Import getSignedUrl
-
 
 function makeid(length) {
   let result = "";
@@ -2002,32 +2004,81 @@ async function getS3FileUrl(key) {
     throw error; // Or handle the error as needed
   }
 }
-function generatePDF(emiData) {
-  const doc = new jsPDF();
+async function generatePDF(emiData) {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: [80, 150] // Adjust size as needed (roughly food bill size)
+  });
 
-  // Header
-  doc.setFontSize(20);
-  doc.text("Your Company Name", 10, 20);
-  // Add more header details and logo (doc.addImage) here
+  // Header (Company Logo & Name)
+  const logoUrl = 'https://androidbucket3577.s3.ap-south-1.amazonaws.com/ic_gs_blue_red.jpeg';
+  const logoWidth = 40;
+  const logoHeight = (logoWidth * 25) / 60; // Maintain aspect ratio
+  doc.addImage(logoUrl, 'JPEG', (doc.internal.pageSize.width - logoWidth) / 2, 10, logoWidth, logoHeight);
+
   
-  // Customer Info Section
+
   doc.setFontSize(12);
-  doc.text("EMI Bill Details", 10, 40);
-  doc.text(`Customer Name: ${emiData.customer_name}`, 10, 50);
-  // Add other customer details
+  const textWidth = doc.getTextWidth("GS Finance & Leasing Private Limited");
+  doc.text("GS Finance & Leasing Private Limited", (doc.internal.pageSize.width - textWidth) / 2, 20); // Center text
 
-  // Bill Details Section
-  doc.text(`EMI Amount: ₹${emiData.collection_amount}`, 10, 80);
-  // Add penalty and total, format numbers for clarity
+  const tableData = [
+    ["Customer Name", emiData.customer_name],
+    ["Loan ID", emiData.customer_loan_id],
+    ["EMI ID", emiData.customer_emi_id],
+    ["EMI Amount", `₹${emiData.collection_amount}`],
+    ["Penalty", `₹${emiData.customer_penalty}`],
+    // Add other relevant rows here
+  ];
 
-  // Collection Location 
-  const locString = `Latitude: ${emiData.collection_location.split(',')[0]}, Longitude: ${emiData.collection_location.split(',')[1]}`;
-  doc.text(locString, 10, 110);
+  // Table Generation with Adjustments
+  doc.autoTable({
+    head: [['Item', 'Details']],
+    body: tableData,
+    startY: 35,
+    styles: {
+      font: "helvetica",
+      fontSize: 7, 
+      halign: 'center',
+      valign: 'middle',
+      cellPadding: 2, 
+      overflow: 'linebreak' 
+    },
+    headStyles: { 
+      fillColor: [230, 230, 230],
+      halign: 'center', 
+      valign: 'middle',
+    },
+    columnStyles: {
+      0: { cellWidth: 'auto' }, 
+      1: { cellWidth: 'wrap' },
+    },
+    didDrawCell: (data) => {
+      if (data.section === 'body' && data.column.index === 1) {
+        doc.setTextColor(255, 0, 0); 
+      } else {
+        doc.setTextColor(0, 0, 0); 
+      }
+    }
+  });
 
-  // Footer (Add payment instructions, etc.)
+  // Center the Table
+  const table = doc.lastAutoTable;
+  const tableWidth = table.getWidth();
+  table.xPos = (doc.internal.pageSize.width - tableWidth) / 2;
+  const footerY = doc.autoTable.previous.finalY + 10; // Start footer 10mm below the table
+  doc.setFontSize(8);
+  doc.text("Collection Details: "+emiData.collection_address, 10, footerY);
 
-  doc.save("emi_bill.pdf");
+
+
+  
+
+  const pdfBuffer = doc.output('arraybuffer');
+  return pdfBuffer;
 }
+
 
 const createUserCollection = async (req,res) => {
   try{
@@ -2051,9 +2102,9 @@ const createUserCollection = async (req,res) => {
         await newUserCollection.save();
         
         
-        const pdf = generatePDF(req.body);
-        const pdfBuffer = pdf.output('arraybuffer');
-        const s3Key = `emi_bills/${Date.now()}_bill.pdf`; // Unique name
+        
+        const pdfBuffer = await generatePDF(req.body);
+        const s3Key = `emi_bills/${Date.now()}_${req.body.customer_name}_GS-EMI_bill.pdf`; // Unique name
         await s3.send(new PutObjectCommand({
           Bucket: 'androidbucket3577',
           Key: s3Key,
