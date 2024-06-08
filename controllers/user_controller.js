@@ -1492,7 +1492,6 @@ const getLeadEmi = async (req,res) => {
           total_interest : totalInterest,
           emi_amount : EMI,
           total_amount : totalAmount,
-          payment_array : emiPaymentArray
         });
 
     }else{
