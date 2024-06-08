@@ -28,6 +28,8 @@ const uploadMiddleWare = require("./aws/FileUpload");
 
 // routes
 app.post('/create-user', registerUser);
+app.post('/update-user',user.updateUser);
+
 app.post('/login-user',loginUser);
 app.post('/update-mpass',updateMpass);
 app.post('/create-lead',createLead);
@@ -44,6 +46,8 @@ app.post('/filter-closedLoan-by-date',user.getclosedLeadByDate);//Rishi
 
 
 app.post('/create-user-collection',user.createUserCollection);
+app.post('/get-user-collection',user.getUserCollection);
+app.get('/get-users-with-collection',user.getAllUserTotalAmount);
 app.post('/update-user-collection',user.updateUserCollection);
 app.post('/delete-user-collection',user.deleteUserCollection);
 

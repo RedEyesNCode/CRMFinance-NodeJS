@@ -15,7 +15,14 @@ const LoanClosedModel = require("../models/loan_closed_model");
 const EmiPaymentSchedule = require("../models/emi_payment_schedule");
 const UserCollection = require("../models/user_collection_model");
 const LRU = require('lru-cache').LRU; // Import the LRU class specifically
+const fs = require('fs');
+const { jsPDF } = require('jspdf');
+const {autoTable} = require ('jspdf-autotable');
+const fetch = require('node-fetch-cjs');
 
+const { GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3'); // Import for S3 GetObjectCommand
+const { S3Client } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");  // Import getSignedUrl
 
 function makeid(length) {
   let result = "";
@@ -227,6 +234,52 @@ const deleteUser = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+// controller function to get-all-users-with-total-collection amount
+const getAllUserTotalAmount = async (req, res) => {
+  try {
+    const allUsers = await UserData.find().sort({ createdAt: -1 }); // Get all users
+
+    const usersWithTotalCollectionAmount = await Promise.all(
+      allUsers.map(async (user) => {
+        const totalCollectionAmount = await UserCollection.aggregate([
+          { $match: { user: user._id } }, // Filter collections by user
+          {
+            $group: {
+              _id: null, // Single group for total
+              total: { $sum: { $toInt: "$collection_amount" } }, // Sum amounts, converting to integers
+            },
+          },
+        ]);
+
+        return {
+          ...user.toObject(), // Convert Mongoose document to plain object
+          totalCollectionAmount: totalCollectionAmount.length ? totalCollectionAmount[0].total : 0,
+        };
+      })
+    );
+
+    if (allUsers.length == 0) {
+      return res.status(200).json({ status: "fail", code: 400, message: "No users found !" });
+    } else {
+      return res.status(200).json({
+        status: "success",
+        code: 200,
+        message: "all-app-users",
+        data: usersWithTotalCollectionAmount,
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    if (error instanceof mongoose.Error.CastError) {
+      return res.status(200).json({ status: "fail", code: 200, error: "Invalid user ID format" });
+    }
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+
+
 
 // controller function to get-all-users
 const getAllUsers = async (req, res) => {
@@ -614,7 +667,7 @@ const checkUniqueLead = async (req, res) => {
   try {
     const { number, pancard, aadhar } = req.body;
 
-    const existingLead = await UserLead.findOne({
+    const existingLead = await UserLead.find({
       $or: [
         { mobileNumber: number },
         { panCard: pancard },
@@ -622,7 +675,7 @@ const checkUniqueLead = async (req, res) => {
       ]
     });
 
-    if (!existingLead) {
+    if (existingLead.length === 0) {
       res.status(200).json({
         message: "New Lead Found",
         status: "success",
@@ -1727,25 +1780,63 @@ const searchUserLeads = async (req,res) => {
 
 
 }
+
+
+
+
+
+
 const searchUserLeadsByStatus = async (req,res) => {
   try {
-    const { userId, status } = req.body;
+    const { fromDate, toDate, lead_status, userId } = req.body;
+   // Input Validation (Optional but recommended)
+   if (!userId || !lead_status) {
+    return res.status(400).json({ error: 'userId and status are required' });
+}
+if (!['EMPTY','PENDING','APPROVED','REJECTED','DISBURSED'].includes(status)){
+    return res.status(400).json({ error: 'Invalid status value'});
+}
+    // Parse the dates from YYYY-MM-DD format
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
 
-    // Input Validation (Optional but recommended)
-    if (!userId || !status) {
-        return res.status(400).json({ error: 'userId and status are required' });
+    // Set the 'to' date to the end of the day
+    to.setHours(23, 59, 59, 999);
+
+    let query = {
+      user : userId,
+
+      createdAt: {
+        $gte: from,
+        $lte: to
+      }
+    };
+    if (lead_status) {
+      query.lead_status = lead_status;
     }
-    if (!['EMPTY','PENDING','APPROVED','REJECTED','DISBURSED'].includes(status)){
-        return res.status(400).json({ error: 'Invalid status value'});
+    // Execute the query
+    const leads = await UserLead.find(query);
+
+    if (leads.length ===0) {
+      return res.status(200).json({
+        status: 'Failed',
+        code: 404,
+        message: 'No Lead found'
+      });
     }
 
-    // Query Logic
-    const leads = await UserLead.find({
-        user: userId,
-        lead_status: status,
+    res.json({
+      status: 'success',
+      code: 200,
+      message: 'filtered-leads',
+      data: leads
     });
 
-    res.json({status : 'success',code : 200, message : 'User-Filtered-Leads-Status',data : leads});
+ 
+
+    // Query Logic
+    
+
 } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });
@@ -1856,21 +1947,194 @@ const updateUserCollection = async (req,res) => {
 
 
 
+const getUserCollection = async (req,res) => {
+  try{
+    const userCollections = await UserCollection.find({ user: req.body.userId }).sort({ createdAt: -1 });
+    if(userCollections.length===0){
+      res.status(200).json({
+        status: 'fail',
+        code: 200,
+        message: 'User Collection Not Found !',
+      });
+     
+
+    }else{
+      
+      res.status(200).json({
+        status: 'fail',
+        code: 200,
+        message: 'User Collection Records !',
+        data : userCollections
+      });
+    }
+
+
+  }catch(error){
+
+    res.status(200).json({
+      status: 'fail',
+      code: 500,
+      message: 'Internal Server Error',
+    });
+
+    console.log(error);
+
+  }
+
+
+}
+const s3 = new S3Client({
+  credentials: {
+    secretAccessKey:'f6/nS6glE8s9aeW3c0QVzxjcRY1Co/ATdNdAVhXw',
+    accessKeyId:'AKIA4MTWKENW4EBCBQNF'
+  },
+  region:'ap-south-1'
+})
+async function getS3FileUrl(key) {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: 'androidbucket3577',
+      Key: key,
+    });
+    
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 }); // Get presigned URL, valid for 1 hour
+    return url;
+  } catch (error) {
+    console.error("Error getting S3 URL:", error);
+    throw error; // Or handle the error as needed
+  }
+}
+async function generatePDF(emiData) {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: [80, 150] // Adjust size as needed (roughly food bill size)
+  });
+
+  // Header (Company Logo & Name)
+  const logoUrl = 'https://androidbucket3577.s3.ap-south-1.amazonaws.com/ic_gs_blue_red.jpeg';
+  const logoWidth = 40;
+  const logoHeight = (logoWidth * 25) / 60; // Maintain aspect ratio
+  doc.addImage(logoUrl, 'JPEG', (doc.internal.pageSize.width - logoWidth) / 2, 10, logoWidth, logoHeight);
+
+  
+
+  doc.setFontSize(12);
+  const textWidth = doc.getTextWidth("GS Finance & Leasing Private Limited");
+  doc.text("GS Finance & Leasing Private Limited", (doc.internal.pageSize.width - textWidth) / 2, 20); // Center text
+
+  const tableData = [
+    ["Customer Name", emiData.customer_name],
+    ["Loan ID", emiData.customer_loan_id],
+    ["EMI ID", emiData.customer_emi_id],
+    ["EMI Amount", `₹${emiData.collection_amount}`],
+    ["Penalty", `₹${emiData.customer_penalty}`],
+    // Add other relevant rows here
+  ];
+
+  // Table Generation with Adjustments
+  doc.autoTable({
+    head: [['Item', 'Details']],
+    body: tableData,
+    startY: 35,
+    styles: {
+      font: "helvetica",
+      fontSize: 7, 
+      halign: 'center',
+      valign: 'middle',
+      cellPadding: 2, 
+      overflow: 'linebreak' 
+    },
+    headStyles: { 
+      fillColor: [230, 230, 230],
+      halign: 'center', 
+      valign: 'middle',
+    },
+    columnStyles: {
+      0: { cellWidth: 'auto' }, 
+      1: { cellWidth: 'wrap' },
+    },
+    didDrawCell: (data) => {
+      if (data.section === 'body' && data.column.index === 1) {
+        doc.setTextColor(255, 0, 0); 
+      } else {
+        doc.setTextColor(0, 0, 0); 
+      }
+    }
+  });
+
+  // Center the Table
+  const table = doc.lastAutoTable;
+  const tableWidth = table.getWidth();
+  table.xPos = (doc.internal.pageSize.width - tableWidth) / 2;
+  const footerY = doc.autoTable.previous.finalY + 10; // Start footer 10mm below the table
+  doc.setFontSize(8);
+  doc.text("Collection Details: "+emiData.collection_address, 10, footerY);
+
+
+
+  
+
+  const pdfBuffer = doc.output('arraybuffer');
+  return pdfBuffer;
+}
 
 
 const createUserCollection = async (req,res) => {
   try{
     const user = await UserData.findById(req.body.userId);
-    if(!user){
-      const newUserCollection = new UserCollection(req.body);
-      const saved = await newUserCollection.save();
+    if(user!=null){
       
-      res.status(200).json({
-        status: 'fail',
-        code: 200,
-        message: 'User Collection Recorded Successfully !',
-        data : saved
-      });
+    uploadMiddleWare.single('file')(req, res, async (err) => { 
+      if (err) {
+        // ... (your error handling for file upload errors)
+        res.status(200).json({
+          status: 'fail',
+          code: 200,
+          message: 'User not found !',
+          error : err,
+        });
+      } else {
+        // ... (your existing code to find the user and save the newUserCollection)
+        const newUserCollection = new UserCollection(req.body);
+        newUserCollection.user = req.body.userId;
+        newUserCollection.generated_emi_bill = "";
+        await newUserCollection.save();
+        
+        
+        
+        const pdfBuffer = await generatePDF(req.body);
+        const s3Key = `emi_bills/${Date.now()}_${req.body.customer_name}_GS-EMI_bill.pdf`; // Unique name
+        await s3.send(new PutObjectCommand({
+          Bucket: 'androidbucket3577',
+          Key: s3Key,
+          Body: pdfBuffer,
+          ContentType: 'application/pdf',
+        }));
+        // Get the S3 URL
+        const s3Url = await getS3FileUrl(s3Key);
+
+        // Update the collection with the S3 URL
+        newUserCollection.generated_emi_bill = s3Url;
+        await newUserCollection.save();
+        // ... rest of your code
+        res.status(200).json({
+          status: 'success',
+          code: 200,
+          message: 'User Collection Recorded Successfully !',
+          data : newUserCollection
+        });
+      }
+    });
+   
+
+
+
+
+
+
+      
+      
       
     }else{
       res.status(200).json({
@@ -2557,6 +2821,57 @@ const createVisit = async (req, res) => {
 };
 
 
+const updateUser = async (req, res) => {
+  try {
+    const { userId, fullName, telephoneNumber, mPass, empId } = req.body;
+
+    // 1. Find the user to update
+    const user = await UserData.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        status: "404",
+        code: 404,
+        message: "User not found",
+      });
+    }
+
+    // 2. Check for duplicate phone number (if changing)
+    if (
+      telephoneNumber &&
+      telephoneNumber !== user.telephoneNumber &&
+      (await UserData.findOne({ telephoneNumber }))
+    ) {
+      return res.status(400).json({
+        status: "400",
+        code: 400,
+        message: "Mobile number already exists",
+      });
+    }
+
+    // 3. Update user fields
+    user.fullName = fullName || user.fullName; // Update only if provided
+    user.telephoneNumber = telephoneNumber || user.telephoneNumber;
+    user.mpass = mPass;
+    user.employeeId = empId;
+
+
+    // 4. Save the updated user
+    const updatedUser = await user.save();
+
+    res.status(200).json({
+      status: "200",
+      code: 200,
+      message: "User updated successfully!",
+      data: updatedUser,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+
 
 
 // Controller function for user registration
@@ -2709,6 +3024,7 @@ module.exports = {
   getOngoingLoanDetail,
 
   deleteRejectedLoan,
+  getAllUserTotalAmount,
   calculateTotals,
 
   getAllRejectedLoans,
@@ -2751,6 +3067,10 @@ module.exports = {
   getclosedLeadByDate,
   createUserCollection,
   updateUserCollection,
-  deleteUserCollection
+  deleteUserCollection,
+  getUserCollection,
+  updateUser,
+
+
 
 };
