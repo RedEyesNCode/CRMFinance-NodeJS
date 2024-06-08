@@ -1504,6 +1504,9 @@ const getLeadEmi = async (req,res) => {
    
   }catch(error){
     console.log(error);
+    return res
+        .status(200)
+        .json({ code: 500, status: "fail", message: "Internal server error" });
   }
 
 
