@@ -36,13 +36,20 @@ app.post('/create-lead',createLead);
 app.post('/create-visit',user.createVisit)
 app.post('/update-lead-status',updateLeadStatus);
 app.post('/get-all-leads',getAllLeads);
+
+/////////////////////////////////Rishi///////////////////////
 app.post('/filter-leads-Date_Status_Name',user.getLeadsByDateAndStatusName);//Rishi
 app.post('/filter-leads-by-month',user.getLeadsByCurrentMonth);//Rishi
 app.post('/filter-approveLoan-by-date',user.getApproveLeadByDate);//Rishi
+app.post('/filter-approveLoan-by-month',user.getApproveLeadsByMonth);//Rishi
 app.post('/filter-disburseLoan-by-date',user.getDisburseLeadByDate);//Rishi
+app.post('/filter-disburseLoan-by-month',user.getDisburseLeadsByMonth);//Rishi
 app.post('/filter-rejectedLoan-by-date',user.getRejectedLeadByDate);//Rishi
+app.post('/filter-rejectedLoan-by-month',user.getRejectedLeadsByMonth);//Rishi
 app.post('/filter-ongoingLoan-by-date',user.getOngoingLeadByDate);//Rishi
+app.post('/filter-ongoingLoan-by-month',user.getOngoingLeadsByMonth);//Rishi
 app.post('/filter-closedLoan-by-date',user.getclosedLeadByDate);//Rishi
+app.post('/filter-closedLoan-by-month',user.getClosedLeadsByMonth);//Rishi
 
 
 app.post('/create-user-collection',user.createUserCollection);

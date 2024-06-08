@@ -14,15 +14,15 @@ const RecycleBin = require("../models/recycler_bin");
 const LoanClosedModel = require("../models/loan_closed_model");
 const EmiPaymentSchedule = require("../models/emi_payment_schedule");
 const UserCollection = require("../models/user_collection_model");
-const LRU = require('lru-cache').LRU; // Import the LRU class specifically
-const fs = require('fs');
-const { jsPDF } = require('jspdf');
-const {autoTable} = require ('jspdf-autotable');
-const fetch = require('node-fetch-cjs');
+const LRU = require("lru-cache").LRU; // Import the LRU class specifically
+const fs = require("fs");
+const { jsPDF } = require("jspdf");
+const { autoTable } = require("jspdf-autotable");
+const fetch = require("node-fetch-cjs");
 
-const { GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3'); // Import for S3 GetObjectCommand
-const { S3Client } = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");  // Import getSignedUrl
+const { GetObjectCommand, PutObjectCommand } = require("@aws-sdk/client-s3"); // Import for S3 GetObjectCommand
+const { S3Client } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner"); // Import getSignedUrl
 
 function makeid(length) {
   let result = "";
@@ -254,13 +254,17 @@ const getAllUserTotalAmount = async (req, res) => {
 
         return {
           ...user.toObject(), // Convert Mongoose document to plain object
-          totalCollectionAmount: totalCollectionAmount.length ? totalCollectionAmount[0].total : 0,
+          totalCollectionAmount: totalCollectionAmount.length
+            ? totalCollectionAmount[0].total
+            : 0,
         };
       })
     );
 
     if (allUsers.length == 0) {
-      return res.status(200).json({ status: "fail", code: 400, message: "No users found !" });
+      return res
+        .status(200)
+        .json({ status: "fail", code: 400, message: "No users found !" });
     } else {
       return res.status(200).json({
         status: "success",
@@ -272,14 +276,13 @@ const getAllUserTotalAmount = async (req, res) => {
   } catch (error) {
     console.error(error);
     if (error instanceof mongoose.Error.CastError) {
-      return res.status(200).json({ status: "fail", code: 200, error: "Invalid user ID format" });
+      return res
+        .status(200)
+        .json({ status: "fail", code: 200, error: "Invalid user ID format" });
     }
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-
-
 
 // controller function to get-all-users
 const getAllUsers = async (req, res) => {
@@ -310,7 +313,9 @@ const getAllUsers = async (req, res) => {
 
 const getAllDisburmentLoans = async (req, res) => {
   try {
-    const allLeads = await LoanDisburseModel.find().sort({ createdAt: -1 }).populate("user");
+    const allLeads = await LoanDisburseModel.find()
+      .sort({ createdAt: -1 })
+      .populate("user");
     if (allLeads.length == 0) {
       res
         .status(200)
@@ -338,7 +343,9 @@ const getAllDisburmentLoans = async (req, res) => {
 
 const getAllApprovalLoans = async (req, res) => {
   try {
-    const allLeads = await LoanApproveModel.find().sort({ createdAt: -1 }).populate("user");
+    const allLeads = await LoanApproveModel.find()
+      .sort({ createdAt: -1 })
+      .populate("user");
     if (allLeads.length == 0) {
       res
         .status(200)
@@ -671,21 +678,21 @@ const checkUniqueLead = async (req, res) => {
       $or: [
         { mobileNumber: number },
         { panCard: pancard },
-        { aadhar_card: aadhar }
-      ]
+        { aadhar_card: aadhar },
+      ],
     });
 
     if (existingLead.length === 0) {
       res.status(200).json({
         message: "New Lead Found",
         status: "success",
-        code: 200
+        code: 200,
       });
     } else {
-      res.status(200).json({ 
-        message: "Lead already exists", 
-        status: "fail", 
-        code: 400 
+      res.status(200).json({
+        message: "Lead already exists",
+        status: "fail",
+        code: 400,
       });
     }
   } catch (error) {
@@ -693,14 +700,10 @@ const checkUniqueLead = async (req, res) => {
     res.status(200).json({
       message: "Internal server error",
       status: "error",
-      code: 500
+      code: 500,
     });
   }
 };
-
-
-
-
 
 // controller function to update-amount-in-all-tables.
 const updateAmountFields = async (req, res) => {
@@ -777,7 +780,9 @@ const calculateTotals = async (req, res) => {
     let totalAmountUnpaid = 0;
 
     for (const payment of emiSchedule.payments) {
-      const amount = parseFloat(payment.principalAmount) + parseFloat(payment.interestAmount); // Convert to float for calculation
+      const amount =
+        parseFloat(payment.principalAmount) +
+        parseFloat(payment.interestAmount); // Convert to float for calculation
       if (payment.paymentStatus === "paid") {
         totalAmountPaid += amount;
       } else {
@@ -1285,9 +1290,8 @@ const updateLeadStatus = async (req, res) => {
 //   try {
 
 //     const allLeads = await UserLead.find().sort({ createdAt: -1 }).populate("user");
-    
-//     console.log(allLeads); // Log the raw results to check the order
 
+//     console.log(allLeads); // Log the raw results to check the order
 
 //     if (allLeads.length == 0) {
 //       res
@@ -1301,7 +1305,7 @@ const updateLeadStatus = async (req, res) => {
 //         data: allLeads,
 //       });
 //     }
-//   } catch (error) { 
+//   } catch (error) {
 //     console.error(error);
 //     if (error instanceof mongoose.Error.CastError) {
 //       return res
@@ -1313,8 +1317,8 @@ const updateLeadStatus = async (req, res) => {
 // };
 const getAllLeads = async (req, res) => {
   try {
-    const page = parseInt(req.body.page) || 1;  
-    const limit = parseInt(req.body.limit) || 100; 
+    const page = parseInt(req.body.page) || 1;
+    const limit = parseInt(req.body.limit) || 100;
 
     const skip = (page - 1) * limit;
 
@@ -1325,10 +1329,12 @@ const getAllLeads = async (req, res) => {
       .limit(limit);
 
     const totalLeads = await UserLead.countDocuments();
-    res.setHeader('Cache-Control', 'private, max-age=60'); // Cache for 60 seconds (adjust as needed)
+    res.setHeader("Cache-Control", "private, max-age=60"); // Cache for 60 seconds (adjust as needed)
 
     if (allLeads.length === 0) {
-      res.status(200).json({ status: "fail", code: 200, error: "No Leads Exists" });
+      res
+        .status(200)
+        .json({ status: "fail", code: 200, error: "No Leads Exists" });
     } else {
       res.status(200).json({
         status: "success",
@@ -1336,23 +1342,21 @@ const getAllLeads = async (req, res) => {
         message: "all-admin-leads",
         data: allLeads,
         currentPage: page,
-        totalCount : totalLeads,
-        
+        totalCount: totalLeads,
+
         totalPages: Math.ceil(totalLeads / limit), // Calculate total pages
       });
     }
   } catch (error) {
     console.error(error);
     if (error instanceof mongoose.Error.CastError) {
-      return res.status(200).json({ status: "fail", code: 200, error: "Invalid user ID format" });
+      return res
+        .status(200)
+        .json({ status: "fail", code: 200, error: "Invalid user ID format" });
     }
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-
-
-
 
 const getDisbursalLoanDetail = async (req, res) => {
   try {
@@ -1465,12 +1469,11 @@ const getClosedLoanDetails = async (req, res) => {
   }
 };
 
-const getLeadEmi = async (req,res) => {
-
-  try{
-    const {leadId,emi_tenure} = req.body;
+const getLeadEmi = async (req, res) => {
+  try {
+    const { leadId, emi_tenure } = req.body;
     const lead = await UserLead.findById(leadId);
-    if(lead){
+    if (lead) {
       const P = parseFloat(lead.leadAmount);
       const R = parseFloat(lead.lead_interest_rate) / 100 / 12; // Monthly interest rate
       const N = parseFloat(emi_tenure);
@@ -1481,33 +1484,26 @@ const getLeadEmi = async (req,res) => {
       const EMI = (P + totalInterest) / N;
       const totalAmount = EMI * N;
       console.log(req.body);
-     
-      return res
-        .status(200)
-        .json({
-          code: 200,
-          status: "success",
-          message: "Emi Details",
-          monthly_interest : monthlyInterest,
-          total_interest : totalInterest,
-          emi_amount : EMI,
-          total_amount : totalAmount,
-          payment_array : emiPaymentArray
-        });
 
-    }else{
+      return res.status(200).json({
+        code: 200,
+        status: "success",
+        message: "Emi Details",
+        monthly_interest: monthlyInterest,
+        total_interest: totalInterest,
+        emi_amount: EMI,
+        total_amount: totalAmount,
+        payment_array: emiPaymentArray,
+      });
+    } else {
       return res
         .status(200)
         .json({ code: 400, status: "fail", message: "Lead not found" });
     }
-
-   
-  }catch(error){
+  } catch (error) {
     console.log(error);
   }
-
-
-}
+};
 // controller function to get-lead-by-id
 const getLeadDetails = async (req, res) => {
   try {
@@ -1554,33 +1550,27 @@ const getLoanApprovalDetails = async (req, res) => {
     console.log(error);
   }
 };
-const deleteUserCollection = async(req,res)=>{
-
-  try{
+const deleteUserCollection = async (req, res) => {
+  try {
     const collection = await UserCollection.findById(req.body.collection_id);
-    if(collection){
+    if (collection) {
       await collection.deleteOne();
       return res.status(200).json({
         status: "200",
         code: 200,
         message: "Collection Deleted Successfully !",
       });
-
-    }else{
+    } else {
       return res.status(200).json({
         status: "200",
         code: 200,
         message: "Collection Not Found !",
       });
-
     }
-    
-  }catch(error){
+  } catch (error) {
     console.log(error);
   }
-
-
-}
+};
 
 // controller function to create-lead
 
@@ -1589,7 +1579,6 @@ const createLead = async (req, res) => {
     const { userId, mobileNumber, pancard, aadhar_card } = req.body; // Get lead data from the request body
     console.log(req.body);
     const leadCount = await UserLead.find();
-
 
     // Check if userId is valid
     const user = await UserData.findById(userId);
@@ -1603,7 +1592,6 @@ const createLead = async (req, res) => {
       pancard: pancard,
       aadhar_card: aadhar_card,
     });
-    
 
     if (existingLead.length != 0) {
       return res
@@ -1614,7 +1602,7 @@ const createLead = async (req, res) => {
     // Create a new UserLead document
     const newLead = new UserLead(req.body);
     newLead.user = userId;
-    newLead.generated_loan_id = 'GS '+leadCount.length+1;
+    newLead.generated_loan_id = "GS " + leadCount.length + 1;
 
     // const initialCounter = new Counter({ _id: 'userLeadId', seq: 0 });
     // await initialCounter.save();
@@ -1695,19 +1683,19 @@ const deleteApprovalLoan = async (req, res) => {
   }
 };
 
-const getAllUserApprovedLeads = async (req,res) => {
-  
+const getAllUserApprovedLeads = async (req, res) => {
   try {
-    const userLead = await UserLead.find({ user: req.body.userId, lead_status : 'APPROVED' });
+    const userLead = await UserLead.find({
+      user: req.body.userId,
+      lead_status: "APPROVED",
+    });
     if (userLead.length != 0) {
-      return res
-        .status(200)
-        .json({
-          status: "success",
-          code: 200,
-          message: "User Leads Fetched successfully !",
-          data: userLead,
-        });
+      return res.status(200).json({
+        status: "success",
+        code: 200,
+        message: "User Leads Fetched successfully !",
+        data: userLead,
+      });
     } else {
       return res
         .status(200)
@@ -1722,13 +1710,9 @@ const getAllUserApprovedLeads = async (req,res) => {
     }
     res.status(500).json({ error: "Internal Server Error" });
   }
+};
 
-
-}
-
-const searchUserLeadsByDate = async(req,res) => {
-
-
+const searchUserLeadsByDate = async (req, res) => {
   try {
     const { userId, fromDate, toDate } = req.body;
 
@@ -1737,65 +1721,71 @@ const searchUserLeadsByDate = async(req,res) => {
     const endDate = new Date(toDate);
 
     if (isNaN(startDate) || isNaN(endDate)) {
-        return res.status(400).json({ error: 'Invalid date format. Please use YYYY-MM-DD' });
+      return res
+        .status(400)
+        .json({ error: "Invalid date format. Please use YYYY-MM-DD" });
     }
 
     // Query Logic
     const leads = await UserLead.find({
-        user: userId,
-        createdAt: {
-            $gte: startDate,   // Greater than or equal to fromDate
-            $lte: endDate,    // Less than or equal to toDate
-        },
+      user: userId,
+      createdAt: {
+        $gte: startDate, // Greater than or equal to fromDate
+        $lte: endDate, // Less than or equal to toDate
+      },
     });
 
-    res.json({status : 'success',code : 200,message : 'User-Filtered-Leads-Date',data : leads});
-} catch (error) {
+    res.json({
+      status: "success",
+      code: 200,
+      message: "User-Filtered-Leads-Date",
+      data: leads,
+    });
+  } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
-}
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
-}
-
-const searchUserLeads = async (req,res) => {
-
-
+const searchUserLeads = async (req, res) => {
   try {
     const userId = req.body.userId;
     const queryText = req.body.queryText;
 
     // Search Logic (Case-Insensitive)
     const leads = await UserLead.find({
-        user: userId,
-        $or: [
-            { firstName: { $regex: queryText, $options: 'i' } }, // Case-insensitive search
-        ],
+      user: userId,
+      $or: [
+        { firstName: { $regex: queryText, $options: "i" } }, // Case-insensitive search
+      ],
     });
 
-    res.json({status : 'success',code : 200, message : 'User-Filtered-Leads-Text',data : leads});
-} catch (error) {
+    res.json({
+      status: "success",
+      code: 200,
+      message: "User-Filtered-Leads-Text",
+      data: leads,
+    });
+  } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
-}
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
-
-}
-
-
-
-
-
-
-const searchUserLeadsByStatus = async (req,res) => {
+const searchUserLeadsByStatus = async (req, res) => {
   try {
     const { fromDate, toDate, lead_status, userId } = req.body;
-   // Input Validation (Optional but recommended)
-   if (!userId || !lead_status) {
-    return res.status(400).json({ error: 'userId and status are required' });
-}
-if (!['EMPTY','PENDING','APPROVED','REJECTED','DISBURSED'].includes(status)){
-    return res.status(400).json({ error: 'Invalid status value'});
-}
+    // Input Validation (Optional but recommended)
+    if (!userId || !lead_status) {
+      return res.status(400).json({ error: "userId and status are required" });
+    }
+    if (
+      !["EMPTY", "PENDING", "APPROVED", "REJECTED", "DISBURSED"].includes(
+        status
+      )
+    ) {
+      return res.status(400).json({ error: "Invalid status value" });
+    }
     // Parse the dates from YYYY-MM-DD format
     const from = new Date(fromDate);
     const to = new Date(toDate);
@@ -1804,12 +1794,12 @@ if (!['EMPTY','PENDING','APPROVED','REJECTED','DISBURSED'].includes(status)){
     to.setHours(23, 59, 59, 999);
 
     let query = {
-      user : userId,
+      user: userId,
 
       createdAt: {
         $gte: from,
-        $lte: to
-      }
+        $lte: to,
+      },
     };
     if (lead_status) {
       query.lead_status = lead_status;
@@ -1817,39 +1807,31 @@ if (!['EMPTY','PENDING','APPROVED','REJECTED','DISBURSED'].includes(status)){
     // Execute the query
     const leads = await UserLead.find(query);
 
-    if (leads.length ===0) {
+    if (leads.length === 0) {
       return res.status(200).json({
-        status: 'Failed',
+        status: "Failed",
         code: 404,
-        message: 'No Lead found'
+        message: "No Lead found",
       });
     }
 
     res.json({
-      status: 'success',
+      status: "success",
       code: 200,
-      message: 'filtered-leads',
-      data: leads
+      message: "filtered-leads",
+      data: leads,
     });
 
- 
-
     // Query Logic
-    
-
-} catch (error) {
+  } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
-}
-
-
-
-}
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 ///Changes by rishi
 const getLeadsByDateAndStatusName = async (req, res) => {
   try {
     const { fromDate, toDate, lead_status, firstName } = req.body;
-
     // Parse the dates from YYYY-MM-DD format
     const from = new Date(fromDate);
     const to = new Date(toDate);
@@ -1860,8 +1842,8 @@ const getLeadsByDateAndStatusName = async (req, res) => {
     let query = {
       createdAt: {
         $gte: from,
-        $lte: to
-      }
+        $lte: to,
+      },
     };
 
     // Add lead_status to query if provided
@@ -1871,132 +1853,116 @@ const getLeadsByDateAndStatusName = async (req, res) => {
 
     // Add firstName filter using regex if provided
     if (firstName) {
-      query.firstName = { $regex: firstName, $options: 'i' }; // 'i' makes it case-insensitive
+      query.firstName = { $regex: firstName, $options: "i" }; // 'i' makes it case-insensitive
     }
 
     // Execute the query
     const leads = await UserLead.find(query);
 
-    if (leads.length ===0) {
+    if (leads.length === 0) {
       return res.status(200).json({
-        status: 'Failed',
+        status: "Failed",
         code: 404,
-        message: 'No Lead found'
+        message: "No Lead found",
       });
     }
 
     res.json({
-      status: 'success',
+      status: "success",
       code: 200,
-      message: 'filtered-leads',
-      data: leads
+      message: "filtered-leads",
+      data: leads,
     });
   } catch (error) {
     res.json({
-      status: 'Failed',
+      status: "Failed",
       code: 500,
-      message: error.message
+      message: error.message,
     });
   }
 };
-const updateUserCollection = async (req,res) => {
-  try{
+const updateUserCollection = async (req, res) => {
+  try {
     const collection = await UserCollection.findById(req.body.collection_id);
-    if(collection){
-      if(req.body.status==="APPROVED"){
+    if (collection) {
+      if (req.body.status === "APPROVED") {
         collection.collection_status = req.body.status;
-    
-        const updatedCollectionAmount = Number(collection.collection_amount)-Number(req.body.approved_collection_amount);
+
+        const updatedCollectionAmount =
+          Number(collection.collection_amount) -
+          Number(req.body.approved_collection_amount);
         collection.amount = updatedCollectionAmount;
         await collection.save();
         res.status(200).json({
-          status: 'success',
+          status: "success",
           code: 200,
-          message: 'You have approved the employee collection',
-          data : collection
+          message: "You have approved the employee collection",
+          data: collection,
         });
-
-
-      
-      }else{
+      } else {
         collection.collection_status = req.body.status;
         await collection.save();
         res.status(200).json({
-          status: 'success',
+          status: "success",
           code: 200,
-          message: 'You have rejected the employee collection',
+          message: "You have rejected the employee collection",
         });
-
-
       }
-
-    }else{
+    } else {
       res.status(200).json({
-        status: 'fail',
+        status: "fail",
         code: 200,
-        message: 'User Collection Not Found !',
+        message: "User Collection Not Found !",
       });
     }
-
-  }catch(error){
-    console.log(error)
+  } catch (error) {
+    console.log(error);
   }
+};
 
-
-}
-
-
-
-const getUserCollection = async (req,res) => {
-  try{
-    const userCollections = await UserCollection.find({ user: req.body.userId }).sort({ createdAt: -1 });
-    if(userCollections.length===0){
+const getUserCollection = async (req, res) => {
+  try {
+    const userCollections = await UserCollection.find({
+      user: req.body.userId,
+    }).sort({ createdAt: -1 });
+    if (userCollections.length === 0) {
       res.status(200).json({
-        status: 'fail',
+        status: "fail",
         code: 200,
-        message: 'User Collection Not Found !',
+        message: "User Collection Not Found !",
       });
-     
-
-    }else{
-      
+    } else {
       res.status(200).json({
-        status: 'fail',
+        status: "fail",
         code: 200,
-        message: 'User Collection Records !',
-        data : userCollections
+        message: "User Collection Records !",
+        data: userCollections,
       });
     }
-
-
-  }catch(error){
-
+  } catch (error) {
     res.status(200).json({
-      status: 'fail',
+      status: "fail",
       code: 500,
-      message: 'Internal Server Error',
+      message: "Internal Server Error",
     });
 
     console.log(error);
-
   }
-
-
-}
+};
 const s3 = new S3Client({
   credentials: {
-    secretAccessKey:'f6/nS6glE8s9aeW3c0QVzxjcRY1Co/ATdNdAVhXw',
-    accessKeyId:'AKIA4MTWKENW4EBCBQNF'
+    secretAccessKey: "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",
+    accessKeyId: "AKIA4MTWKENW4EBCBQNF",
   },
-  region:'ap-south-1'
-})
+  region: "ap-south-1",
+});
 async function getS3FileUrl(key) {
   try {
     const command = new GetObjectCommand({
-      Bucket: 'androidbucket3577',
+      Bucket: "androidbucket3577",
       Key: key,
     });
-    
+
     const url = await getSignedUrl(s3, command, { expiresIn: 3600 }); // Get presigned URL, valid for 1 hour
     return url;
   } catch (error) {
@@ -2006,22 +1972,32 @@ async function getS3FileUrl(key) {
 }
 async function generatePDF(emiData) {
   const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: [80, 150] // Adjust size as needed (roughly food bill size)
+    orientation: "portrait",
+    unit: "mm",
+    format: [80, 150], // Adjust size as needed (roughly food bill size)
   });
 
   // Header (Company Logo & Name)
-  const logoUrl = 'https://androidbucket3577.s3.ap-south-1.amazonaws.com/ic_gs_blue_red.jpeg';
+  const logoUrl =
+    "https://androidbucket3577.s3.ap-south-1.amazonaws.com/ic_gs_blue_red.jpeg";
   const logoWidth = 40;
   const logoHeight = (logoWidth * 25) / 60; // Maintain aspect ratio
-  doc.addImage(logoUrl, 'JPEG', (doc.internal.pageSize.width - logoWidth) / 2, 10, logoWidth, logoHeight);
-
-  
+  doc.addImage(
+    logoUrl,
+    "JPEG",
+    (doc.internal.pageSize.width - logoWidth) / 2,
+    10,
+    logoWidth,
+    logoHeight
+  );
 
   doc.setFontSize(12);
   const textWidth = doc.getTextWidth("GS Finance & Leasing Private Limited");
-  doc.text("GS Finance & Leasing Private Limited", (doc.internal.pageSize.width - textWidth) / 2, 20); // Center text
+  doc.text(
+    "GS Finance & Leasing Private Limited",
+    (doc.internal.pageSize.width - textWidth) / 2,
+    20
+  ); // Center text
 
   const tableData = [
     ["Customer Name", emiData.customer_name],
@@ -2034,33 +2010,33 @@ async function generatePDF(emiData) {
 
   // Table Generation with Adjustments
   doc.autoTable({
-    head: [['Item', 'Details']],
+    head: [["Item", "Details"]],
     body: tableData,
     startY: 35,
     styles: {
       font: "helvetica",
-      fontSize: 7, 
-      halign: 'center',
-      valign: 'middle',
-      cellPadding: 2, 
-      overflow: 'linebreak' 
+      fontSize: 7,
+      halign: "center",
+      valign: "middle",
+      cellPadding: 2,
+      overflow: "linebreak",
     },
-    headStyles: { 
+    headStyles: {
       fillColor: [230, 230, 230],
-      halign: 'center', 
-      valign: 'middle',
+      halign: "center",
+      valign: "middle",
     },
     columnStyles: {
-      0: { cellWidth: 'auto' }, 
-      1: { cellWidth: 'wrap' },
+      0: { cellWidth: "auto" },
+      1: { cellWidth: "wrap" },
     },
     didDrawCell: (data) => {
-      if (data.section === 'body' && data.column.index === 1) {
-        doc.setTextColor(255, 0, 0); 
+      if (data.section === "body" && data.column.index === 1) {
+        doc.setTextColor(255, 0, 0);
       } else {
-        doc.setTextColor(0, 0, 0); 
+        doc.setTextColor(0, 0, 0);
       }
-    }
+    },
   });
 
   // Center the Table
@@ -2069,99 +2045,77 @@ async function generatePDF(emiData) {
   table.xPos = (doc.internal.pageSize.width - tableWidth) / 2;
   const footerY = doc.autoTable.previous.finalY + 10; // Start footer 10mm below the table
   doc.setFontSize(8);
-  doc.text("Collection Details: "+emiData.collection_address, 10, footerY);
+  doc.text("Collection Details: " + emiData.collection_address, 10, footerY);
 
-
-
-  
-
-  const pdfBuffer = doc.output('arraybuffer');
+  const pdfBuffer = doc.output("arraybuffer");
   return pdfBuffer;
 }
 
-
-const createUserCollection = async (req,res) => {
-  try{
+const createUserCollection = async (req, res) => {
+  try {
     const user = await UserData.findById(req.body.userId);
-    if(user!=null){
-      
-    uploadMiddleWare.single('file')(req, res, async (err) => { 
-      if (err) {
-        // ... (your error handling for file upload errors)
-        res.status(200).json({
-          status: 'fail',
-          code: 200,
-          message: 'User not found !',
-          error : err,
-        });
-      } else {
-        // ... (your existing code to find the user and save the newUserCollection)
-        const newUserCollection = new UserCollection(req.body);
-        newUserCollection.user = req.body.userId;
-        newUserCollection.generated_emi_bill = "";
-        await newUserCollection.save();
-        
-        
-        
-        const pdfBuffer = await generatePDF(req.body);
-        const s3Key = `emi_bills/${Date.now()}_${req.body.customer_name}_GS-EMI_bill.pdf`; // Unique name
-        await s3.send(new PutObjectCommand({
-          Bucket: 'androidbucket3577',
-          Key: s3Key,
-          Body: pdfBuffer,
-          ContentType: 'application/pdf',
-        }));
-        // Get the S3 URL
-        const s3Url = await getS3FileUrl(s3Key);
+    if (user != null) {
+      uploadMiddleWare.single("file")(req, res, async (err) => {
+        if (err) {
+          // ... (your error handling for file upload errors)
+          res.status(200).json({
+            status: "fail",
+            code: 200,
+            message: "User not found !",
+            error: err,
+          });
+        } else {
+          // ... (your existing code to find the user and save the newUserCollection)
+          const newUserCollection = new UserCollection(req.body);
+          newUserCollection.user = req.body.userId;
+          newUserCollection.generated_emi_bill = "";
+          await newUserCollection.save();
 
-        // Update the collection with the S3 URL
-        newUserCollection.generated_emi_bill = s3Url;
-        await newUserCollection.save();
-        // ... rest of your code
-        res.status(200).json({
-          status: 'success',
-          code: 200,
-          message: 'User Collection Recorded Successfully !',
-          data : newUserCollection
-        });
-      }
-    });
-   
+          const pdfBuffer = await generatePDF(req.body);
+          const s3Key = `emi_bills/${Date.now()}_${
+            req.body.customer_name
+          }_GS-EMI_bill.pdf`; // Unique name
+          await s3.send(
+            new PutObjectCommand({
+              Bucket: "androidbucket3577",
+              Key: s3Key,
+              Body: pdfBuffer,
+              ContentType: "application/pdf",
+            })
+          );
+          // Get the S3 URL
+          const s3Url = await getS3FileUrl(s3Key);
 
-
-
-
-
-
-      
-      
-      
-    }else{
-      res.status(200).json({
-        status: 'fail',
-        code: 200,
-        message: 'User not found !',
+          // Update the collection with the S3 URL
+          newUserCollection.generated_emi_bill = s3Url;
+          await newUserCollection.save();
+          // ... rest of your code
+          res.status(200).json({
+            status: "success",
+            code: 200,
+            message: "User Collection Recorded Successfully !",
+            data: newUserCollection,
+          });
+        }
       });
-
+    } else {
+      res.status(200).json({
+        status: "fail",
+        code: 200,
+        message: "User not found !",
+      });
     }
-
-  }catch(error){
-    console.log(error)
+  } catch (error) {
+    console.log(error);
     res.status(200).json({
-      status: 'fail',
+      status: "fail",
       code: 500,
-      message: 'Internal Server Error',
+      message: "Internal Server Error",
     });
-
   }
+};
 
-
-
-}
-
-
-
-
+/////////////////Rishi//////////////////////////////
 //New to sort month
 const getLeadsByCurrentMonth = async (req, res) => {
   try {
@@ -2170,9 +2124,9 @@ const getLeadsByCurrentMonth = async (req, res) => {
     // Validate month input
     if (!month || isNaN(month)) {
       return res.status(200).json({
-        status: 'Failed',
+        status: "Failed",
         code: 400,
-        message: 'Please provide a valid month.'
+        message: "Please provide a valid month.",
       });
     }
 
@@ -2187,252 +2141,506 @@ const getLeadsByCurrentMonth = async (req, res) => {
     const leads = await UserLead.find({
       createdAt: {
         $gte: fromDate,
-        $lte: toDate
-      }
+        $lte: toDate,
+      },
     });
-    if (leads.length ===0) {
+    if (leads.length === 0) {
       return res.status(200).json({
-        status: 'Failed',
+        status: "Failed",
         code: 404,
-        message: 'No Lead found'
+        message: "No Lead found",
       });
     }
 
     res.json({
-      status: 'success',
+      status: "success",
       code: 200,
-      message: 'leads-by-current-and-month',
-      data: leads
+      message: "leads-by-current-month",
+      data: leads,
     });
   } catch (error) {
     res.status(200).json({
-      status: 'Failed',
+      status: "Failed",
       code: 500,
-      message: error.message
+      message: error.message,
     });
   }
 };
 //Filter on approve lead by Date
 const getApproveLeadByDate = async (req, res) => {
   try {
-    const { fromDate, toDate,firstName } = req.body;
-    
+    const { fromDate, toDate, firstName } = req.body;
+
     // Parse the dates from YYYY-MM-DD format
     const from = new Date(fromDate);
     const to = new Date(toDate);
-    
+
     // Set the 'to' date to the end of the day
     to.setHours(23, 59, 59, 999);
     let query = {
       createdAt: {
         $gte: from,
-        $lte: to
-      }
+        $lte: to,
+      },
     };
     // Add firstName filter using regex if provided
     if (firstName) {
-      query.firstName = { $regex: firstName, $options: 'i' }; // 'i' makes it case-insensitive
+      query.firstName = { $regex: firstName, $options: "i" }; // 'i' makes it case-insensitive
     }
 
-    const loans = await LoanApproveModel.find(query);
+    const loans = await LoanApproveModel.find(query).populate("user");
 
-    if (loans.length === 0 ) {
+    if (loans.length === 0) {
       return res.status(200).json({
-        status: 'Failed',
+        status: "Failed",
         code: 404,
-        message: 'No Approved Loan found'
+        message: "No Approved Loan found",
       });
     }
 
     res.json({
-      status: 'success',
+      status: "success",
       code: 200,
-      message: 'filtered-Approved-loans',
-      data: loans
+      message: "filtered-Approved-loans",
+      data: loans,
     });
   } catch (error) {
     res.json({
-      status: 'Failed',
+      status: "Failed",
       code: 500,
-      message: error.message
+      message: error.message,
+    });
+  }
+};
+const getApproveLeadsByMonth = async (req, res) => {
+  try {
+    const { month } = req.body;
+
+    // Validate month input
+    if (!month || isNaN(month)) {
+      return res.status(200).json({
+        status: "Failed",
+        code: 400,
+        message: "Please provide a valid month.",
+      });
+    }
+
+    // Get the current year
+    const currentYear = new Date().getFullYear();
+
+    // Parse month and current year into a Date object
+    const fromDate = new Date(currentYear, month - 1, 1); // Month is zero-based in JavaScript
+    const toDate = new Date(currentYear, month, 0); // Get the last day of the month
+
+    // Find leads within the specified date range
+    const leads = await LoanApproveModel.find({
+      createdAt: {
+        $gte: fromDate,
+        $lte: toDate,
+      },
+    });
+    if (leads.length === 0) {
+      return res.status(200).json({
+        status: "Failed",
+        code: 404,
+        message: "No Approve Lead found",
+      });
+    }
+
+    res.json({
+      status: "success",
+      code: 200,
+      message: "Approve Lead found for current-month",
+      data: leads,
+    });
+  } catch (error) {
+    res.status(200).json({
+      status: "Failed",
+      code: 500,
+      message: error.message,
     });
   }
 };
 const getDisburseLeadByDate = async (req, res) => {
   try {
-    const { fromDate, toDate,firstName } = req.body;
-    
+    const { fromDate, toDate, firstName } = req.body;
+
     // Parse the dates from YYYY-MM-DD format
     const from = new Date(fromDate);
     const to = new Date(toDate);
-    
+
     // Set the 'to' date to the end of the day
     to.setHours(23, 59, 59, 999);
     let query = {
       createdAt: {
         $gte: from,
-        $lte: to
-      }
+        $lte: to,
+      },
     };
     // Add firstName filter using regex if provided
     if (firstName) {
-      query.firstName = { $regex: firstName, $options: 'i' }; // 'i' makes it case-insensitive
+      query.firstName = { $regex: firstName, $options: "i" }; // 'i' makes it case-insensitive
     }
 
     const loans = await LoanDisburseModel.find(query);
 
-    if (loans.length === 0 ) {
+    if (loans.length === 0) {
       return res.status(200).json({
-        status: 'Failed',
+        status: "Failed",
         code: 404,
-        message: 'No Disbursed Loan found'
+        message: "No Disbursed Loan found",
       });
     }
 
     res.json({
-      status: 'success',
+      status: "success",
       code: 200,
-      message: 'filtered-Disbursed-loans',
-      data: loans
+      message: "filtered-Disbursed-loans",
+      data: loans,
     });
   } catch (error) {
     res.json({
-      status: 'Failed',
+      status: "Failed",
       code: 500,
-      message: error.message
+      message: error.message,
+    });
+  }
+};
+const getDisburseLeadsByMonth = async (req, res) => {
+  try {
+    const { month } = req.body;
+
+    // Validate month input
+    if (!month || isNaN(month)) {
+      return res.status(200).json({
+        status: "Failed",
+        code: 400,
+        message: "Please provide a valid month.",
+      });
+    }
+
+    // Get the current year
+    const currentYear = new Date().getFullYear();
+
+    // Parse month and current year into a Date object
+    const fromDate = new Date(currentYear, month - 1, 1); // Month is zero-based in JavaScript
+    const toDate = new Date(currentYear, month, 0); // Get the last day of the month
+
+    // Find leads within the specified date range
+    const leads = await LoanDisburseModel.find({
+      createdAt: {
+        $gte: fromDate,
+        $lte: toDate,
+      },
+    });
+    if (leads.length === 0) {
+      return res.status(200).json({
+        status: "Failed",
+        code: 404,
+        message: "No Disburse Lead found",
+      });
+    }
+
+    res.json({
+      status: "success",
+      code: 200,
+      message: "Disburse Lead found for current-month",
+      data: leads,
+    });
+  } catch (error) {
+    res.status(200).json({
+      status: "Failed",
+      code: 500,
+      message: error.message,
     });
   }
 };
 const getRejectedLeadByDate = async (req, res) => {
   try {
-    const { fromDate, toDate } = req.body;
-    
+    const { fromDate, toDate, firstName } = req.body;
+
     // Parse the dates from YYYY-MM-DD format
     const from = new Date(fromDate);
     const to = new Date(toDate);
-    
+
     // Set the 'to' date to the end of the day
     to.setHours(23, 59, 59, 999);
+    let query = {
+      createdAt: {
+        $gte: from,
+        $lte: to,
+      },
+    };
+    // Add firstName filter using regex if provided
+    if (firstName) {
+      query.firstName = { $regex: firstName, $options: "i" }; // 'i' makes it case-insensitive
+    }
 
-    const loans = await LoanRejectedModel.find();
-
-    const filteredloans = loans.filter(lead => {
-      const createdAt = new Date(lead.createdAt);
-      return createdAt >= from && createdAt <= to;
-    });
-
-    if (filteredloans.length === 0 ) {
+    const loans = await LoanRejectedModel.find(query);
+    if (loans.length === 0) {
       return res.status(200).json({
-        status: 'Failed',
+        status: "Failed",
         code: 404,
-        message: 'No Rejected Loan found'
+        message: "No Rejected Loan found",
       });
     }
 
     res.json({
-      status: 'success',
+      status: "success",
       code: 200,
-      message: 'filtered-Rejected-loans',
-      data: filteredloans
+      message: "filtered-Rejected-loans",
+      data: loans,
     });
   } catch (error) {
     res.json({
-      status: 'Failed',
+      status: "Failed",
       code: 500,
-      message: error.message
+      message: error.message,
+    });
+  }
+};
+const getRejectedLeadsByMonth = async (req, res) => {
+  try {
+    const { month } = req.body;
+
+    // Validate month input
+    if (!month || isNaN(month)) {
+      return res.status(200).json({
+        status: "Failed",
+        code: 400,
+        message: "Please provide a valid month.",
+      });
+    }
+
+    // Get the current year
+    const currentYear = new Date().getFullYear();
+
+    // Parse month and current year into a Date object
+    const fromDate = new Date(currentYear, month - 1, 1); // Month is zero-based in JavaScript
+    const toDate = new Date(currentYear, month, 0); // Get the last day of the month
+
+    // Find leads within the specified date range
+    const leads = await LoanRejectedModel.find({
+      createdAt: {
+        $gte: fromDate,
+        $lte: toDate,
+      },
+    });
+    if (leads.length === 0) {
+      return res.status(200).json({
+        status: "Failed",
+        code: 404,
+        message: "No Rejected Lead found",
+      });
+    }
+
+    res.json({
+      status: "success",
+      code: 200,
+      message: "Rejected Lead found for current-month",
+      data: leads,
+    });
+  } catch (error) {
+    res.status(200).json({
+      status: "Failed",
+      code: 500,
+      message: error.message,
     });
   }
 };
 const getOngoingLeadByDate = async (req, res) => {
   try {
-    const { fromDate, toDate } = req.body;
-    
+    const { fromDate, toDate, firstName } = req.body;
+
     // Parse the dates from YYYY-MM-DD format
     const from = new Date(fromDate);
     const to = new Date(toDate);
-    
+
     // Set the 'to' date to the end of the day
     to.setHours(23, 59, 59, 999);
+    let query = {
+      createdAt: {
+        $gte: from,
+        $lte: to,
+      },
+    };
+    // Add firstName filter using regex if provided
+    if (firstName) {
+      query.firstName = { $regex: firstName, $options: "i" }; // 'i' makes it case-insensitive
+    }
 
-    const loans = await LoanOngoingModel.find();
+    const loans = await LoanOngoingModel.find(query);
 
-    const filteredloans = loans.filter(lead => {
-      const createdAt = new Date(lead.createdAt);
-      return createdAt >= from && createdAt <= to;
-    });
-
-    if (filteredloans.length === 0 ) {
+    if (loans.length === 0) {
       return res.status(200).json({
-        status: 'Failed',
+        status: "Failed",
         code: 404,
-        message: 'No Ongoing Loan found'
+        message: "No Ongoing Loan found",
       });
     }
 
     res.json({
-      status: 'success',
+      status: "success",
       code: 200,
-      message: 'filtered-Ongoing-loans',
-      data: filteredloans
+      message: "filtered-Ongoing-loans",
+      data: loans,
     });
   } catch (error) {
     res.json({
-      status: 'Failed',
+      status: "Failed",
       code: 500,
-      message: error.message
+      message: error.message,
+    });
+  }
+};
+const getOngoingLeadsByMonth = async (req, res) => {
+  try {
+    const { month } = req.body;
+
+    // Validate month input
+    if (!month || isNaN(month)) {
+      return res.status(200).json({
+        status: "Failed",
+        code: 400,
+        message: "Please provide a valid month.",
+      });
+    }
+
+    // Get the current year
+    const currentYear = new Date().getFullYear();
+
+    // Parse month and current year into a Date object
+    const fromDate = new Date(currentYear, month - 1, 1); // Month is zero-based in JavaScript
+    const toDate = new Date(currentYear, month, 0); // Get the last day of the month
+
+    // Find leads within the specified date range
+    const leads = await LoanOngoingModel.find({
+      createdAt: {
+        $gte: fromDate,
+        $lte: toDate,
+      },
+    });
+    if (leads.length === 0) {
+      return res.status(200).json({
+        status: "Failed",
+        code: 404,
+        message: "No Ongoing Lead found",
+      });
+    }
+
+    res.json({
+      status: "success",
+      code: 200,
+      message: "Ongoing Lead found for current-month",
+      data: leads,
+    });
+  } catch (error) {
+    res.status(200).json({
+      status: "Failed",
+      code: 500,
+      message: error.message,
     });
   }
 };
 const getclosedLeadByDate = async (req, res) => {
   try {
-    const { fromDate, toDate } = req.body;
-    
+    const { fromDate, toDate, firstName } = req.body;
+
     // Parse the dates from YYYY-MM-DD format
     const from = new Date(fromDate);
     const to = new Date(toDate);
-    
+
     // Set the 'to' date to the end of the day
     to.setHours(23, 59, 59, 999);
+    let query = {
+      createdAt: {
+        $gte: from,
+        $lte: to,
+      },
+    };
+    // Add firstName filter using regex if provided
+    if (firstName) {
+      query.firstName = { $regex: firstName, $options: "i" }; // 'i' makes it case-insensitive
+    }
+    const loans = await LoanClosedModel.find(query);
 
-    const loans = await LoanClosedModel.find();
-
-    const filteredloans = loans.filter(lead => {
-      const createdAt = new Date(lead.createdAt);
-      return createdAt >= from && createdAt <= to;
-    });
-
-    if (filteredloans.length === 0 ) {
+    if (loans.length === 0) {
       return res.status(200).json({
-        status: 'Failed',
+        status: "Failed",
         code: 404,
-        message: 'No Closed Loan found'
+        message: "No Closed Loan found",
       });
     }
 
     res.json({
-      status: 'success',
+      status: "success",
       code: 200,
-      message: 'filtered-Closed-loans',
-      data: filteredloans
+      message: "filtered-Closed-loans",
+      data: loans,
     });
   } catch (error) {
     res.json({
-      status: 'Failed',
+      status: "Failed",
       code: 500,
-      message: error.message
+      message: error.message,
     });
   }
 };
+const getClosedLeadsByMonth = async (req, res) => {
+  try {
+    const { month } = req.body;
 
+    // Validate month input
+    if (!month || isNaN(month)) {
+      return res.status(200).json({
+        status: "Failed",
+        code: 400,
+        message: "Please provide a valid month.",
+      });
+    }
 
+    // Get the current year
+    const currentYear = new Date().getFullYear();
 
+    // Parse month and current year into a Date object
+    const fromDate = new Date(currentYear, month - 1, 1); // Month is zero-based in JavaScript
+    const toDate = new Date(currentYear, month, 0); // Get the last day of the month
 
+    // Find leads within the specified date range
+    const leads = await LoanClosedModel.find({
+      createdAt: {
+        $gte: fromDate,
+        $lte: toDate,
+      },
+    });
+    if (leads.length === 0) {
+      return res.status(200).json({
+        status: "Failed",
+        code: 404,
+        message: "No Closed Lead found",
+      });
+    }
 
-
-
+    res.json({
+      status: "success",
+      code: 200,
+      message: "Closed Lead found for current-month",
+      data: leads,
+    });
+  } catch (error) {
+    res.status(200).json({
+      status: "Failed",
+      code: 500,
+      message: error.message,
+    });
+  }
+};
+//////////////////////////////////////////////////
 const getAllUserLeads = async (req, res) => {
   try {
-    const userLead = await UserLead.find({ user: req.body.userId }).sort({ createdAt: -1 });
+    const userLead = await UserLead.find({ user: req.body.userId }).sort({
+      createdAt: -1,
+    });
     if (userLead.length != 0) {
       return res.status(200).json({
         status: "success",
@@ -2480,10 +2688,11 @@ const getAllUserVisits = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
 const getAllVisits = async (req, res) => {
   try {
-    const userLead = await UserVisit.find().sort({ createdAt: -1 }).populate("user");
+    const userLead = await UserVisit.find()
+      .sort({ createdAt: -1 })
+      .populate("user");
     if (userLead != null && userLead.length != 0) {
       return res.status(200).json({
         status: "success",
@@ -2506,7 +2715,6 @@ const getAllVisits = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
 const getAllOnGoingLoans = async (req, res) => {
   try {
     const userLead = await LoanOngoingModel.find();
@@ -2739,7 +2947,9 @@ const deleteOnGoingLoan = async (req, res) => {
 // controller function to get-all-attendance.
 const getAllAttendance = async (req, res) => {
   try {
-    const allAttendance = await UserAttendance.find().sort({ createdAt: -1 }).populate("user");
+    const allAttendance = await UserAttendance.find()
+      .sort({ createdAt: -1 })
+      .populate("user");
     if (allAttendance.length != 0) {
       return res.status(200).json({
         status: "success",
@@ -2820,7 +3030,6 @@ const createVisit = async (req, res) => {
   }
 };
 
-
 const updateUser = async (req, res) => {
   try {
     const { userId, fullName, telephoneNumber, mPass, empId } = req.body;
@@ -2855,7 +3064,6 @@ const updateUser = async (req, res) => {
     user.mpass = mPass;
     user.employeeId = empId;
 
-
     // 4. Save the updated user
     const updatedUser = await user.save();
 
@@ -2870,9 +3078,6 @@ const updateUser = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
-
-
 
 // Controller function for user registration
 
@@ -3010,7 +3215,7 @@ module.exports = {
   getAllUserLeads,
   getAllVisits,
   getUserAttendance,
-  getAllUserApprovedLeads,  
+  getAllUserApprovedLeads,
   createAttendance,
   updateLoanApprovalStatus,
   updateDisbursalLoanStatus,
@@ -3061,16 +3266,18 @@ module.exports = {
   getLeadsByDateAndStatusName,
   getLeadsByCurrentMonth,
   getApproveLeadByDate,
+  getApproveLeadsByMonth,
   getDisburseLeadByDate,
+  getDisburseLeadsByMonth,
   getRejectedLeadByDate,
+  getRejectedLeadsByMonth,
   getOngoingLeadByDate,
+  getOngoingLeadsByMonth,
   getclosedLeadByDate,
+  getClosedLeadsByMonth,
   createUserCollection,
   updateUserCollection,
   deleteUserCollection,
   getUserCollection,
   updateUser,
-
-
-
 };
