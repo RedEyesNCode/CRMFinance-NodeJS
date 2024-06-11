@@ -234,6 +234,18 @@ const deleteUser = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+const getAllLeadCards = async (req,res) => {
+
+  try{
+
+  }catch(error){
+    console.log(error);
+    res.status(200).json({status : 'fail',code : 500, message: "Internal Server Error" });
+
+  }
+
+
+}
 
 const createLeadCard = async (req,res) => {
   try{
@@ -1372,7 +1384,6 @@ const getAllLeads = async (req, res) => {
         data: allLeads,
         currentPage: page,
         totalCount: totalLeads,
-
         totalPages: Math.ceil(totalLeads / limit), // Calculate total pages
       });
     }
