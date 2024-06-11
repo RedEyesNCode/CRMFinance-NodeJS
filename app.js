@@ -53,6 +53,8 @@ app.post('/delete-user-collection',user.deleteUserCollection);
 
 
 
+app.post('/create-lead-card',user.createLeadCard);
+app.post('/delete-lead-card',user.deleteLeadCard);
 
 
 app.post('/get-lead-details',user.getLeadDetails);
@@ -73,6 +75,7 @@ app.post('/get-user-approved-leads',user.getAllUserApprovedLeads);
 app.post('/check-unique-lead',user.checkUniqueLead);
 
 app.post('/get-user-visit',getAllUserVisits);
+
 app.post('/create-attendance',user.createAttendance);
 app.post('/delete-attendance',user.deleteAttendance);
 app.post('/get-user-attendance',user.getUserAttendance);
