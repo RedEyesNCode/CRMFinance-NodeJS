@@ -256,7 +256,7 @@ const createLeadCard = async (req,res) => {
   try{
     const {telephoneNumber, pancard, aadhar_card,remarks } = req.body; // Get lead data from the request body
     const existingLead = await LeadCardModel.find({
-      mobileNumber: telephoneNumber,
+      telephoneNumber: telephoneNumber,
       pancard: pancard,
       aadhar_card: aadhar_card,
     });
