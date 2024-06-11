@@ -1682,17 +1682,27 @@ const createLead = async (req, res) => {
       pancard: pancard,
       aadhar_card: aadhar_card,
     });
+    const existingLeadCard = await LeadCardModel.find({
+      telephoneNumber: mobileNumber,
+      pancard: pancard,
+      aadhar_card: aadhar_card,
+    });
 
     if (existingLead.length != 0) {
       return res
         .status(200)
-        .json({ code: "200", status: "fail", error: "Lead Alredy Exists" });
+        .json({ code: "200", status: "fail", error: "Lead Already Exists" });
+    }
+    if (existingLeadCard.length != 0) {
+      return res
+        .status(200)
+        .json({ code: "200", status: "fail", error: "Lead Card Already Exists" });
     }
 
     // Create a new UserLead document
     const newLead = new UserLead(req.body);
     newLead.user = userId;
-    newLead.generated_loan_id = "GS " + leadCount.length + 1;
+    newLead.generated_loan_id = "GS" + leadCount.length + 1;
 
     // const initialCounter = new Counter({ _id: 'userLeadId', seq: 0 });
     // await initialCounter.save();
