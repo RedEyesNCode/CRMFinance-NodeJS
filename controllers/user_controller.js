@@ -10,6 +10,8 @@ const LoanApproveModel = require("../models/loan_approve_model");
 const LoanDisburseModel = require("../models/loan_disburse_model");
 const LoanOngoingModel = require("../models/loan_ongoing_model");
 const LoanRejectedModel = require("../models/loan_rejected_model");
+const LeadCardModel = require("../models/lead_card_model");
+
 const RecycleBin = require("../models/recycler_bin");
 const LoanClosedModel = require("../models/loan_closed_model");
 const EmiPaymentSchedule = require("../models/emi_payment_schedule");
@@ -3430,6 +3432,6 @@ module.exports = {
   createLeadCard,
   deleteLeadCard,
   getAllLeadCards,
-  
+
 
 };
