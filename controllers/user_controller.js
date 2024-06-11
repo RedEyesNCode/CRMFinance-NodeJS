@@ -237,7 +237,10 @@ const deleteUser = async (req, res) => {
 const getAllLeadCards = async (req,res) => {
 
   try{
-
+    const allUsers = await LeadCardModel.find().sort({ createdAt: -1 });
+    return res
+    .status(200)
+    .json({ code: "200", status: "success", message: "All Lead Card Templates ",data : allUsers });
   }catch(error){
     console.log(error);
     res.status(200).json({status : 'fail',code : 500, message: "Internal Server Error" });
@@ -3426,6 +3429,7 @@ module.exports = {
   updateUser,
   createLeadCard,
   deleteLeadCard,
-
+  getAllLeadCards,
+  
 
 };
