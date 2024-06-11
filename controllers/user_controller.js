@@ -23,6 +23,8 @@ const fetch = require("node-fetch-cjs");
 const { GetObjectCommand, PutObjectCommand } = require("@aws-sdk/client-s3"); // Import for S3 GetObjectCommand
 const { S3Client } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner"); // Import getSignedUrl
+const UserApprovedCollection = require("../models/user_collection_Approve");
+const UserRejectedCollection = require("../models/user_collection_Rejected");
 
 function makeid(length) {
   let result = "";
@@ -1493,6 +1495,16 @@ const getLeadEmi = async (req, res) => {
         total_interest: totalInterest,
         emi_amount: EMI,
         total_amount: totalAmount,
+      });
+
+      return res.status(200).json({
+        code: 200,
+        status: "success",
+        message: "Emi Details",
+        monthly_interest: monthlyInterest,
+        total_interest: totalInterest,
+        emi_amount: EMI,
+        total_amount: totalAmount,
         payment_array: emiPaymentArray,
       });
     } else {
@@ -1502,6 +1514,9 @@ const getLeadEmi = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
+    return res
+      .status(200)
+      .json({ code: 500, status: "fail", message: "Internal server error" });
   }
 };
 // controller function to get-lead-by-id
@@ -1830,6 +1845,7 @@ const searchUserLeadsByStatus = async (req, res) => {
 };
 ///Changes by rishi
 const getLeadsByDateAndStatusName = async (req, res) => {
+  console.log(req.body);
   try {
     const { fromDate, toDate, lead_status, firstName } = req.body;
     // Parse the dates from YYYY-MM-DD format
@@ -1857,7 +1873,7 @@ const getLeadsByDateAndStatusName = async (req, res) => {
     }
 
     // Execute the query
-    const leads = await UserLead.find(query);
+    const leads = await UserLead.find(query).populate("user");
 
     if (leads.length === 0) {
       return res.status(200).json({
@@ -1883,7 +1899,9 @@ const getLeadsByDateAndStatusName = async (req, res) => {
 };
 const updateUserCollection = async (req, res) => {
   try {
+    console.log(req.body);
     const collection = await UserCollection.findById(req.body.collection_id);
+
     if (collection) {
       if (req.body.status === "APPROVED") {
         collection.collection_status = req.body.status;
@@ -1891,22 +1909,78 @@ const updateUserCollection = async (req, res) => {
         const updatedCollectionAmount =
           Number(collection.collection_amount) -
           Number(req.body.approved_collection_amount);
-        collection.amount = updatedCollectionAmount;
+        collection.collection_amount = updatedCollectionAmount;
         await collection.save();
-        res.status(200).json({
-          status: "success",
-          code: 200,
-          message: "You have approved the employee collection",
-          data: collection,
-        });
+        const isApproved = await UserApprovedCollection.find({user : req.body.userrId});
+        if(isApproved.length === 0){
+          const AppoveColl = new UserApprovedCollection({
+            user: req.body.userId,
+            fullName: collection.fullName,
+            customer_name: collection.customer_name,
+            customer_mobile: collection.customer_mobile,
+            customer_penalty: collection.customer_penalty,
+            customer_emi_id: collection.customer_emi_id,
+            customer_loan_id: collection.customer_loan_id,
+            collection_amount: collection.collection_amount,
+            collection_location: collection.collection_location,
+            collection_address: collection.collection_address,
+            collection_status: collection.collection_status,
+            generated_emi_bill: collection.generated_emi_bill,
+          });
+          await AppoveColl.save();
+          res.status(200).json({
+            status: "success",
+            code: 200,
+            message: "You have approved the employee collection",
+            data: collection,
+            approveData : AppoveColl
+          });
+        }else{
+          res.status(200).json({
+            status: "success",
+            code: 200,
+            message: "You have approved the employee collection",
+            data: collection,
+            approveData : isApproved
+          });
+        }
+        
+       
+        
       } else {
         collection.collection_status = req.body.status;
         await collection.save();
+        const isRejected = await UserRejectedCollection.find({user : req.body.userrId});
+        if(isRejected.length === 0){
+        const RejectedColl = new UserRejectedCollection({
+          user: req.body.userId,
+          fullName: collection.fullName,
+          customer_name: collection.customer_name,
+          customer_mobile: collection.customer_mobile,
+          customer_penalty: collection.customer_penalty,
+          customer_emi_id: collection.customer_emi_id,
+          customer_loan_id: collection.customer_loan_id,
+          collection_amount: collection.collection_amount,
+          collection_location: collection.collection_location,
+          collection_address: collection.collection_address,
+          collection_status: collection.collection_status,
+          generated_emi_bill: collection.generated_emi_bill,
+        });
+        await RejectedColl.save();
         res.status(200).json({
           status: "success",
           code: 200,
           message: "You have rejected the employee collection",
-        });
+          RejectedData : RejectedColl
+        });}else{
+          res.status(200).json({
+            status: "success",
+            code: 200,
+            message: "You have rejected the employee collection",
+            RejectedData : isRejected
+          });
+        
+        }
       }
     } else {
       res.status(200).json({
