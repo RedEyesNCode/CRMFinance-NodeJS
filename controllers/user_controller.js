@@ -235,6 +235,35 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const createLeadCard = async (req,res) => {
+  try{
+    const {telephoneNumber, pancard, aadhar_card,remarks } = req.body; // Get lead data from the request body
+    const existingLead = await LeadCardModel.find({
+      mobileNumber: telephoneNumber,
+      pancard: pancard,
+      aadhar_card: aadhar_card,
+    });
+    if (existingLead.length != 0) {
+      return res
+        .status(200)
+        .json({ code: "200", status: "fail", message: "Lead Template Already Exists" });
+    }
+    const newLeadCard = new LeadCardModel(req.body);
+    const saved = await newLeadCard.save();
+    return res
+        .status(200)
+        .json({ code: "200", status: "success", message: "Created Lead Template Successfully !",data : saved });
+
+
+  }catch(error){
+    console.log(error);
+    res.status(200).json({status : 'fail',code : 500, message: "Internal Server Error" });
+
+
+  }
+
+
+}
 // controller function to get-all-users-with-total-collection amount
 const getAllUserTotalAmount = async (req, res) => {
   try {
@@ -1586,6 +1615,36 @@ const deleteUserCollection = async (req, res) => {
 
 
 }
+const deleteLeadCard = async(req,res) => {
+
+  try{
+    const {leadCardId} = req.body;
+    const userLead = await LeadCardModel.findByIdAndDelete(leadCardId);
+    saveToRecycleBin(JSON.stringify(userLead), "LEAD_CARD");
+
+    if (userLead != null) {
+      return res.status(200).json({
+        status: "success",
+        code: 200,
+        message: "Lead Card Deleted successfully !",
+      });
+    } else {
+      return res
+        .status(200)
+        .json({ status: "fail", code: 400, message: "No Lead Card found !" });
+    }
+
+  }catch(error){
+    console.log(error);
+    res.status(200).json({status : 'fail',code : 500, message: "Internal Server Error" });
+
+  }
+}
+
+
+
+
+
 
 // controller function to create-lead
 
@@ -3354,7 +3413,8 @@ module.exports = {
   deleteUserCollection,
   getUserCollection,
   updateUser,
-
+  createLeadCard,
+  deleteLeadCard,
 
 
 };

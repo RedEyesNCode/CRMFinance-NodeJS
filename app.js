@@ -61,7 +61,7 @@ app.post('/delete-user-collection',user.deleteUserCollection);
 
 
 app.post('/create-lead-card',user.createLeadCard);
-app.post('/delete-lead-card',user.deleteLeadCard);
+app.post('/delete-lead-card',user.deleteLead);
 
 
 app.post('/get-lead-details',user.getLeadDetails);
