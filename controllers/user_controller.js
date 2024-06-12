@@ -1924,7 +1924,7 @@ const searchUserLeadsByStatus = async (req, res) => {
     }
     if (
       !["EMPTY", "PENDING", "APPROVED", "REJECTED", "DISBURSED"].includes(
-        status
+        lead_status
       )
     ) {
       return res.status(400).json({ error: "Invalid status value" });
