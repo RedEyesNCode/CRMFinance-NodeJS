@@ -1954,7 +1954,7 @@ const searchUserLeadsByStatus = async (req, res) => {
 
 
     
-    if (lead_status) {
+    if (lead_status.length!=0) {
       query.lead_status = lead_status;
     }
     // Execute the query
