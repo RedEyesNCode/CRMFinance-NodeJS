@@ -59,6 +59,9 @@ app.post('/update-user-collection',user.updateUserCollection);
 app.post('/delete-user-collection',user.deleteUserCollection);
 
 
+app.get('/get-admin-dashboard',user.getAdminDashboard);
+
+
 
 app.post('/create-lead-card',user.createLeadCard);
 app.post('/delete-lead-card',user.deleteLeadCard);

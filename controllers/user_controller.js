@@ -281,6 +281,49 @@ const createLeadCard = async (req,res) => {
 
 
 }
+
+const getAdminDashboard = async (req,res) => {
+  try{
+    const totalEmployees = await UserData.countDocuments();
+    const totalVisits = await UserVisit.countDocuments();
+    const totalAttendance = await UserAttendance.countDocuments();
+    const totalCollections = await UserCollection.countDocuments();
+    const totalLeads = await UserLead.countDocuments();
+    const lastestLead = await UserLead.find().sort({ createdAt: -1 });
+    const lastestVist = await UserVisit.find().sort({ createdAt: -1 });
+    const lastestCollection = await UserCollection.find().sort({ createdAt: -1 });
+    const lastestAttendance = await UserAttendance.find().sort({ createdAt: -1 });
+    const latestUserEntry = await UserData.find().sort({ createdAt: -1 });
+    const responseJson = {
+      totalEmployees : totalEmployees,
+      totalVisits : totalVisits,
+      totalAttendance : totalAttendance,
+      totalCollections : totalCollections,
+      totalLeads : totalLeads,
+      latestLeadEntry : lastestLead[0],
+      latestVisitEntry : lastestVist[0],
+      latestCollectionEntry : lastestCollection[0],
+      latestAttendanceEntry : lastestAttendance[0],
+      latestUserEntry : latestUserEntry
+
+
+
+    };
+    return res
+        .status(200)
+        .json({ code: "200", status: "success", message: "Admin Dashboard !",data : responseJson });
+
+    
+
+  }catch(error){
+    console.log(error);
+    res.status(200).json({status : 'fail',code : 500, message: "Internal Server Error" });
+
+  }
+
+
+}
+
 // controller function to get-all-users-with-total-collection amount
 const getAllUserTotalAmount = async (req, res) => {
   try {
@@ -3442,6 +3485,8 @@ module.exports = {
   createLeadCard,
   deleteLeadCard,
   getAllLeadCards,
+  getAdminDashboard,
+
 
 
 };
