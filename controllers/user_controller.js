@@ -304,7 +304,7 @@ const getAdminDashboard = async (req,res) => {
       latestVisitEntry : lastestVist[0],
       latestCollectionEntry : lastestCollection[0],
       latestAttendanceEntry : lastestAttendance[0],
-      latestUserEntry : latestUserEntry
+      latestUserEntry : latestUserEntry[0]
 
 
 
