@@ -1903,7 +1903,7 @@ const searchUserLeads = async (req, res) => {
       ],
     });
 
-    res.json({
+    res.status(200).json({
       status: "success",
       code: 200,
       message: "User-Filtered-Leads-Text",
@@ -1958,7 +1958,7 @@ const searchUserLeadsByStatus = async (req, res) => {
       });
     }
 
-    res.json({
+    res.status(200).json({
       status: "success",
       code: 200,
       message: "filtered-leads",
