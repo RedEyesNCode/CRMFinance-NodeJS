@@ -1920,8 +1920,8 @@ const searchUserLeadsByStatus = async (req, res) => {
     const { fromDate, toDate, lead_status, userId } = req.body;
     // Input Validation (Optional but recommended)
     
-    if (!userId || !lead_status) {
-      return res.status(400).json({ error: "userId and status are required" });
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
     }
     if (
       !["EMPTY", "PENDING", "APPROVED", "REJECTED", "DISBURSED"].includes(
