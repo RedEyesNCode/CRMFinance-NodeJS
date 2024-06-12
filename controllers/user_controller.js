@@ -2182,7 +2182,93 @@ async function getS3FileUrl(key) {
     throw error; // Or handle the error as needed
   }
 }
+// async function generatePDF(emiData) {
+//   console.log(emiData);
+//   const doc = new jsPDF({
+//     orientation: "portrait",
+//     unit: "mm",
+//     format: [80, 150], // Adjust size as needed (roughly food bill size)
+//   });
+
+//   // Header (Company Logo & Name)
+//   const logoUrl =
+//   "https://androidbucket3577.s3.ap-south-1.amazonaws.com/ic_gs_blue_red.jpeg";
+//   const logoWidth = 40;
+//   const logoHeight = (logoWidth * 25) / 60; // Maintain aspect ratio
+//   doc.addImage(
+//     logoUrl,
+//     "JPEG",
+//     (doc.internal.pageSize.width - logoWidth) / 2,
+//     10,
+//     logoWidth,
+//     logoHeight
+//   );
+
+//   doc.setFontSize(12);
+//   const textWidth = doc.getTextWidth("GS Finance & Leasing Private Limited");
+//   doc.text(
+//     "GS Finance & Leasing Private Limited",
+//     (doc.internal.pageSize.width - textWidth) / 2,
+//     20
+//   ); // Center text
+
+//   const tableData = [
+//     ["Customer Name", emiData.customer_name],
+//     ["Loan ID", emiData.customer_loan_id],
+//     ["EMI ID", emiData.customer_emi_id],
+//     ["EMI Amount", `₹${emiData.collection_amount}`],
+//     ["Penalty", `₹${emiData.customer_penalty}`],
+//     // Add other relevant rows here
+//   ];
+
+//   // Table Generation with Adjustments
+//   doc.autoTable({
+//     head: [["Item", "Details"]],
+//     body: tableData,
+//     startY: 35,
+//     styles: {
+//       font: "helvetica",
+//       fontSize: 7,
+//       halign: "center",
+//       valign: "middle",
+//       cellPadding: 2,
+//       overflow: "linebreak",
+//     },
+//     headStyles: {
+//       fillColor: [230, 230, 230],
+//       halign: "center",
+//       valign: "middle",
+//     },
+//     columnStyles: {
+//       0: { cellWidth: "auto" },
+//       1: { cellWidth: "wrap" },
+//     },
+//     didDrawCell: (data) => {
+//       if (data.section === "body" && data.column.index === 1) {
+//         doc.setTextColor(255, 0, 0);
+//       } else {
+//         doc.setTextColor(0, 0, 0);
+//       }
+//     },
+//   });
+
+//   // Center the Table
+//   const table = doc.lastAutoTable;
+//   const tableWidth = table.getWidth();
+//   table.xPos = (doc.internal.pageSize.width - tableWidth) / 2;
+//   const footerY = doc.autoTable.previous.finalY + 10; // Start footer 10mm below the table
+//   doc.setFontSize(8);
+//   doc.text("Collection Details: " + emiData.collection_address, 10, footerY);
+
+//   const pdfBuffer = doc.output("arraybuffer");
+//   return pdfBuffer;
+// }/////
 async function generatePDF(emiData) {
+  console.log(emiData);
+  const { default: fetch } = await import("node-fetch");
+
+ 
+
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
@@ -2194,77 +2280,90 @@ async function generatePDF(emiData) {
     "https://androidbucket3577.s3.ap-south-1.amazonaws.com/ic_gs_blue_red.jpeg";
   const logoWidth = 40;
   const logoHeight = (logoWidth * 25) / 60; // Maintain aspect ratio
+
+  // Load the image as base64
+  const logoBase64 = await fetch(logoUrl)
+    .then((res) => res.buffer())
+    .then((buffer) => buffer.toString("base64"));
+
   doc.addImage(
-    logoUrl,
+    `data:image/jpeg;base64,${logoBase64}`,
     "JPEG",
-    (doc.internal.pageSize.width - logoWidth) / 2,
-    10,
-    logoWidth,
-    logoHeight
+    3, // x coordinate
+    5, // y coordinate
+    25, // width
+    25 // height
   );
 
-  doc.setFontSize(12);
-  const textWidth = doc.getTextWidth("GS Finance & Leasing Private Limited");
+  doc.setFontSize(14); // Increase font size
+  doc.setFont("helvetica", "bold"); // Set font style to bold
+  const text = "GS Finance & Leasing";
+  const textWidth = doc.getTextWidth(text);
   doc.text(
-    "GS Finance & Leasing Private Limited",
-    (doc.internal.pageSize.width - textWidth) / 2,
-    20
-  ); // Center text
+    text,
+    25,
+    18 // Position text below the logo
+  );
+  doc.text("Private Limited", 25, 24);
 
   const tableData = [
-    ["Customer Name", emiData.customer_name],
-    ["Loan ID", emiData.customer_loan_id],
-    ["EMI ID", emiData.customer_emi_id],
-    ["EMI Amount", `₹${emiData.collection_amount}`],
-    ["Penalty", `₹${emiData.customer_penalty}`],
+    ["Customer Name", emiData.fullName],
+    ["Loan ID", emiData.userId],
+    ["Collection Status", emiData.collection_status || emiData.status],
+    ["EMI Amount", `INR ${emiData.collection_amount || 0}`],
+    ["Penalty", `INR ${emiData.customer_penalty || 0}`],
+    ["Location", emiData.collection_location || 'Location'],
     // Add other relevant rows here
   ];
 
   // Table Generation with Adjustments
   doc.autoTable({
-    head: [["Item", "Details"]],
+    head: [["Fields", "Data"]],
     body: tableData,
-    startY: 35,
+    startY: 35, // Adjust starting position
     styles: {
       font: "helvetica",
-      fontSize: 7,
-      halign: "center",
+      fontSize: 8, // Adjust font size
+      halign: "left", // Align text to the left
       valign: "middle",
-      cellPadding: 2,
+      cellPadding: 3, // Adjust cell padding
       overflow: "linebreak",
     },
     headStyles: {
-      fillColor: [230, 230, 230],
-      halign: "center",
+      fillColor: [220, 220, 220], // Change header background color
+      textColor: [0, 0, 0], // Change header text color
+      halign: "left", // Align header text to the left
       valign: "middle",
     },
     columnStyles: {
-      0: { cellWidth: "auto" },
-      1: { cellWidth: "wrap" },
+      cellWidth: "auto",
     },
-    didDrawCell: (data) => {
-      if (data.section === "body" && data.column.index === 1) {
-        doc.setTextColor(255, 0, 0);
-      } else {
-        doc.setTextColor(0, 0, 0);
-      }
-    },
+    margin: { top: 0, right: 5, bottom: 0, left: 5 },
   });
+
 
   // Center the Table
   const table = doc.lastAutoTable;
   const tableWidth = table.getWidth();
-  table.xPos = (doc.internal.pageSize.width - tableWidth) / 2;
-  const footerY = doc.autoTable.previous.finalY + 10; // Start footer 10mm below the table
-  doc.setFontSize(8);
-  doc.text("Collection Details: " + emiData.collection_address, 10, footerY);
+  table.xPos = doc.internal.pageSize.width - tableWidth;
+
+  const footerY = table.finalY + 20; // Adjust position below the table
+  doc.setFontSize(10); // Adjust font size
+  doc.setFont("helvetica", "italic"); // Set font style to italic
+  doc.text("Collection Details: " + emiData.collection_location, 10, footerY);
+//   doc.setFontSize(10); // Adjust font size
+//   doc.setFont("helvetica", "italic"); // Set font style to italic
+//   doc.text("Collection Details: " + emiData.collection_location, 10, footerY);
+
 
   const pdfBuffer = doc.output("arraybuffer");
   return pdfBuffer;
+  
 }
 
 const createUserCollection = async (req, res) => {
   try {
+    console.log(req.body);
     const user = await UserData.findById(req.body.userId);
     if (user != null) {
       uploadMiddleWare.single("file")(req, res, async (err) => {
@@ -2285,7 +2384,7 @@ const createUserCollection = async (req, res) => {
 
           const pdfBuffer = await generatePDF(req.body);
           const s3Key = `emi_bills/${Date.now()}_${
-            req.body.customer_name
+            req.body.fullName
           }_GS-EMI_bill.pdf`; // Unique name
           await s3.send(
             new PutObjectCommand({
@@ -2327,7 +2426,7 @@ const createUserCollection = async (req, res) => {
   }
 };
 
-/////////////////Rishi//////////////////////////////
+///////////////////////////Rishi//////////////////////////////
 //New to sort month
 const getLeadsByCurrentMonth = async (req, res) => {
   try {
