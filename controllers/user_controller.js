@@ -1919,6 +1919,7 @@ const searchUserLeadsByStatus = async (req, res) => {
   try {
     const { fromDate, toDate, lead_status, userId } = req.body;
     // Input Validation (Optional but recommended)
+    
     if (!userId || !lead_status) {
       return res.status(400).json({ error: "userId and status are required" });
     }
@@ -1935,7 +1936,6 @@ const searchUserLeadsByStatus = async (req, res) => {
 
     // Set the 'to' date to the end of the day
     to.setHours(23, 59, 59, 999);
-
     let query = {
       user: userId,
 
@@ -1944,6 +1944,16 @@ const searchUserLeadsByStatus = async (req, res) => {
         $lte: to,
       },
     };
+    if(toDate.length===0 || fromDate.length===0){
+      query = {
+        user: userId,
+        lead_status : lead_status
+      }
+
+    }
+
+
+    
     if (lead_status) {
       query.lead_status = lead_status;
     }
