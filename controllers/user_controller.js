@@ -1610,7 +1610,7 @@ const getLeadDetails = async (req, res) => {
   try {
     const { leadId } = req.body;
 
-    const lead = await UserLead.findById(leadId);
+    const lead = await UserLead.findById(leadId).populate("user");
     if (lead != null) {
       return res.status(200).json({
         code: 200,
