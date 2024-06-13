@@ -2141,8 +2141,10 @@ const updateUserCollection = async (req, res) => {
           Number(req.body.approved_collection_amount);
         collection.collection_amount = updatedCollectionAmount;
         await collection.save();
-        const isApproved = await UserApprovedCollection.find({user : req.body.userrId});
-        if(isApproved.length === 0){
+        const isApproved = await UserApprovedCollection.find({
+          user: req.body.userrId,
+        });
+        if (isApproved.length === 0) {
           const AppoveColl = new UserApprovedCollection({
             user: req.body.userId,
             fullName: collection.fullName,
@@ -2163,53 +2165,52 @@ const updateUserCollection = async (req, res) => {
             code: 200,
             message: "You have approved the employee collection",
             data: collection,
-            approveData : AppoveColl
+            approveData: AppoveColl,
           });
-        }else{
+        } else {
           res.status(200).json({
             status: "success",
             code: 200,
             message: "You have approved the employee collection",
             data: collection,
-            approveData : isApproved
+            approveData: isApproved,
           });
         }
-        
-       
-        
       } else {
         collection.collection_status = req.body.status;
         await collection.save();
-        const isRejected = await UserRejectedCollection.find({user : req.body.userrId});
-        if(isRejected.length === 0){
-        const RejectedColl = new UserRejectedCollection({
-          user: req.body.userId,
-          fullName: collection.fullName,
-          customer_name: collection.customer_name,
-          customer_mobile: collection.customer_mobile,
-          customer_penalty: collection.customer_penalty,
-          customer_emi_id: collection.customer_emi_id,
-          customer_loan_id: collection.customer_loan_id,
-          collection_amount: collection.collection_amount,
-          collection_location: collection.collection_location,
-          collection_address: collection.collection_address,
-          collection_status: collection.collection_status,
-          generated_emi_bill: collection.generated_emi_bill,
+        const isRejected = await UserRejectedCollection.find({
+          user: req.body.userrId,
         });
-        await RejectedColl.save();
-        res.status(200).json({
-          status: "success",
-          code: 200,
-          message: "You have rejected the employee collection",
-          RejectedData : RejectedColl
-        });}else{
+        if (isRejected.length === 0) {
+          const RejectedColl = new UserRejectedCollection({
+            user: req.body.userId,
+            fullName: collection.fullName,
+            customer_name: collection.customer_name,
+            customer_mobile: collection.customer_mobile,
+            customer_penalty: collection.customer_penalty,
+            customer_emi_id: collection.customer_emi_id,
+            customer_loan_id: collection.customer_loan_id,
+            collection_amount: collection.collection_amount,
+            collection_location: collection.collection_location,
+            collection_address: collection.collection_address,
+            collection_status: collection.collection_status,
+            generated_emi_bill: collection.generated_emi_bill,
+          });
+          await RejectedColl.save();
           res.status(200).json({
             status: "success",
             code: 200,
             message: "You have rejected the employee collection",
-            RejectedData : isRejected
+            RejectedData: RejectedColl,
           });
-        
+        } else {
+          res.status(200).json({
+            status: "success",
+            code: 200,
+            message: "You have rejected the employee collection",
+            RejectedData: isRejected,
+          });
         }
       }
     } else {
@@ -2356,10 +2357,8 @@ async function getS3FileUrl(key) {
 //   return pdfBuffer;
 // }/////
 async function generatePDF(emiData) {
-  console.log(emiData);
+  // console.log(emiData);
   const { default: fetch } = await import("node-fetch");
-
- 
 
   const doc = new jsPDF({
     orientation: "portrait",
@@ -2387,7 +2386,7 @@ async function generatePDF(emiData) {
     25 // height
   );
 
-  doc.setFontSize(14); // Increase font size
+  doc.setFontSize(12); // Increase font size
   doc.setFont("helvetica", "bold"); // Set font style to bold
   const text = "GS Finance & Leasing";
   const textWidth = doc.getTextWidth(text);
@@ -2397,14 +2396,26 @@ async function generatePDF(emiData) {
     18 // Position text below the logo
   );
   doc.text("Private Limited", 25, 24);
+  let currentDate = new Date();
+  let options = {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+    hour12: true,
+  };
+  let formatter = new Intl.DateTimeFormat("en-IN", options);
+  let formattedDateTime = formatter.format(currentDate);
 
   const tableData = [
     ["Customer Name", emiData.fullName],
     ["Loan ID", emiData.userId],
-    ["Collection Status", emiData.collection_status || emiData.status],
+    ["Collection Status", emiData.collection_status || "PENDING"],
     ["EMI Amount", `INR ${emiData.collection_amount || 0}`],
     ["Penalty", `INR ${emiData.customer_penalty || 0}`],
-    ["Location", emiData.collection_location || 'Location'],
     // Add other relevant rows here
   ];
 
@@ -2415,11 +2426,12 @@ async function generatePDF(emiData) {
     startY: 35, // Adjust starting position
     styles: {
       font: "helvetica",
-      fontSize: 8, // Adjust font size
+      fontSize: 9, // Adjust font size
       halign: "left", // Align text to the left
       valign: "middle",
       cellPadding: 3, // Adjust cell padding
       overflow: "linebreak",
+      fontStyle: "bold",
     },
     headStyles: {
       fillColor: [220, 220, 220], // Change header background color
@@ -2432,7 +2444,9 @@ async function generatePDF(emiData) {
     },
     margin: { top: 0, right: 5, bottom: 0, left: 5 },
   });
-
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text("Date :  " + formattedDateTime, 8, 117);
 
   // Center the Table
   const table = doc.lastAutoTable;
@@ -2441,21 +2455,18 @@ async function generatePDF(emiData) {
 
   const footerY = table.finalY + 20; // Adjust position below the table
   doc.setFontSize(10); // Adjust font size
-  doc.setFont("helvetica", "italic"); // Set font style to italic
-  doc.text("Collection Details: " + emiData.collection_location, 10, footerY);
-//   doc.setFontSize(10); // Adjust font size
-//   doc.setFont("helvetica", "italic"); // Set font style to italic
-//   doc.text("Collection Details: " + emiData.collection_location, 10, footerY);
-
+  doc.setFont("helvetica"); // Set font style to italic
+  doc.text("Employee Signature : " + "____________", 10, footerY + 10);
+  //   doc.setFontSize(10); // Adjust font size
+  //   doc.setFont("helvetica", "italic"); // Set font style to italic
+  //   doc.text("Collection Details: " + emiData.collection_location, 10, footerY);
 
   const pdfBuffer = doc.output("arraybuffer");
   return pdfBuffer;
-  
 }
 
 const createUserCollection = async (req, res) => {
   try {
-    console.log(req.body);
     const user = await UserData.findById(req.body.userId);
     
     if (user != null) {
@@ -2490,13 +2501,15 @@ const createUserCollection = async (req, res) => {
               Key: s3Key,
               Body: pdfBuffer,
               ContentType: "application/pdf",
+              ACL: "public-read",
             })
           );
+          const publicUrl = `https://androidbucket3577.s3.ap-south-1.amazonaws.com/${s3Key}`;
           // Get the S3 URL
-          const s3Url = await getS3FileUrl(s3Key);
+          // const s3Url = await getS3FileUrl(s3Key);
 
           // Update the collection with the S3 URL
-          newUserCollection.generated_emi_bill = s3Url;
+          newUserCollection.generated_emi_bill = publicUrl;
           await newUserCollection.save();
           // ... rest of your code
           res.status(200).json({
