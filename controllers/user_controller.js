@@ -2175,7 +2175,7 @@ async function getS3FileUrl(key) {
       Key: key,
     });
 
-    const url = await getSignedUrl(s3, command, { expiresIn: 3600 }); // Get presigned URL, valid for 1 hour
+    const url = await getSignedUrl(s3, command, { expiresIn: 60000 }); // Get presigned URL, valid for 1 hour
     return url;
   } catch (error) {
     console.error("Error getting S3 URL:", error);
