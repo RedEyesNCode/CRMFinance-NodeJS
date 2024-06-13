@@ -2188,7 +2188,7 @@ const updateUserCollection = async (req, res) => {
             generated_emi_bill: collection.generated_emi_bill,
           });
           await AppoveColl.save();
-          res.status(200).json({
+          return res.status(200).json({
             status: "success",
             code: 200,
             message: "You have approved the employee collection",
@@ -2196,7 +2196,7 @@ const updateUserCollection = async (req, res) => {
             approveData: AppoveColl,
           });
         } else {
-          res.status(200).json({
+          return res.status(200).json({
             status: "success",
             code: 200,
             message: "You have approved the employee collection",
@@ -2226,14 +2226,14 @@ const updateUserCollection = async (req, res) => {
             generated_emi_bill: collection.generated_emi_bill,
           });
           await RejectedColl.save();
-          res.status(200).json({
+          return res.status(200).json({
             status: "success",
             code: 200,
             message: "You have rejected the employee collection",
             RejectedData: RejectedColl,
           });
         } else {
-          res.status(200).json({
+          return res.status(200).json({
             status: "success",
             code: 200,
             message: "You have rejected the employee collection",
@@ -2242,7 +2242,7 @@ const updateUserCollection = async (req, res) => {
         }
       }
     } else {
-      res.status(200).json({
+      return res.status(200).json({
         status: "fail",
         code: 200,
         message: "User Collection Not Found !",
@@ -2250,6 +2250,12 @@ const updateUserCollection = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
+    return res.status(200).json({
+      status: "fail",
+      code: 500,
+      message: "Internal Server Error",
+      error : error
+    });
   }
 };
 
