@@ -59,6 +59,11 @@ app.post('/update-user-collection',user.updateUserCollection);
 app.post('/update-user-collection-amount',user.updateUserCollectionAmount)
 app.post('/delete-user-collection',user.deleteUserCollection);
 
+app.get('/get-approved-collections',user.getApprovedCollections);
+app.get('/get-rejected-collections',user.getRejectedCollections);
+
+
+
 
 app.get('/get-admin-dashboard',user.getAdminDashboard);
 

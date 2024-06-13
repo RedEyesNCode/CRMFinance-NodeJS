@@ -11,6 +11,7 @@ const LoanDisburseModel = require("../models/loan_disburse_model");
 const LoanOngoingModel = require("../models/loan_ongoing_model");
 const LoanRejectedModel = require("../models/loan_rejected_model");
 const LeadCardModel = require("../models/lead_card_model");
+const UserRejectedCollection = require("../models/user_collection_Rejected");
 
 const RecycleBin = require("../models/recycler_bin");
 const LoanClosedModel = require("../models/loan_closed_model");
@@ -25,6 +26,7 @@ const fetch = require("node-fetch-cjs");
 const { GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3'); // Import for S3 GetObjectCommand
 const { S3Client } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");  // Import getSignedUrl
+const UserApprovedCollection = require("../models/user_collection_Approve");
 
 function makeid(length) {
   let result = "";
@@ -236,6 +238,32 @@ const deleteUser = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+const getApprovedCollections = async (req, res) => {
+  try{
+    const allUsers = await UserApprovedCollection.find().sort({ createdAt: -1 });
+    return res
+    .status(200)
+    .json({ code: "200", status: "success", message: "All Approved Collections",data : allUsers });
+  }catch(error){
+    console.log(error);
+    res.status(200).json({status : 'fail',code : 500, message: "Internal Server Error" });
+
+  }
+
+}
+const getRejectedCollections = async (req, res) => {
+  try{
+    const allUsers = await UserRejectedCollection.find().sort({ createdAt: -1 });
+    return res
+    .status(200)
+    .json({ code: "200", status: "success", message: "All Rejected Collections",data : allUsers });
+  }catch(error){
+    console.log(error);
+    res.status(200).json({status : 'fail',code : 500, message: "Internal Server Error" });
+
+  }
+
+}
 const getAllLeadCards = async (req,res) => {
 
   try{
@@ -2090,7 +2118,7 @@ const updateUserCollectionAmount = async (req,res) => {
       if(totalCollectionAmount>=req.body.collection_amount){
         user.totalCollectionAmount = totalCollectionAmount - Number(req.body.collection_amount);
         await user.save();
-        
+
         return res.status(200).json({
           status: "success",
           code: 200,
@@ -3708,6 +3736,9 @@ module.exports = {
   getAdminDashboard,
   getCurrentMonthLeadsUser,
   updateUserCollectionAmount,
+  getApprovedCollections,
+  getRejectedCollections,
+
 
 
 
