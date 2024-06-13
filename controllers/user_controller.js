@@ -1723,6 +1723,67 @@ const getLoanApprovalDetails = async (req, res) => {
     console.log(error);
   }
 };
+
+const deleteRejectedCollection = async (req,res) => {
+
+  try{
+    const collection = await UserRejectedCollection.findById(req.body.collection_id);
+    if (collection) {
+      await collection.deleteOne();
+      return res.status(200).json({
+        status: "200",
+        code: 200,
+        message: "Rejected Collection Deleted Successfully !",
+      });
+    } else {
+      return res.status(200).json({
+        status: "200",
+        code: 200,
+        message: "Collection Not Found !",
+      });
+    }
+
+  }catch(error){
+    console.log(error);
+    return res.status(200).json({
+      status: "fail",
+      code: 500,
+      message: error,
+    });
+  }
+
+
+
+}
+
+const deleteApprovedCollection = async (req,res) => {
+  try{
+    const collection = await UserApprovedCollection.findById(req.body.collection_id);
+    if (collection) {
+      await collection.deleteOne();
+      return res.status(200).json({
+        status: "200",
+        code: 200,
+        message: "Approved Collection Deleted Successfully !",
+      });
+    } else {
+      return res.status(200).json({
+        status: "200",
+        code: 200,
+        message: "Collection Not Found !",
+      });
+    }
+
+  }catch(error){
+    console.log(error);
+
+  }
+
+
+
+}
+
+
 const deleteUserCollection = async (req, res) => {
   try {
     const collection = await UserCollection.findById(req.body.collection_id);
@@ -1742,6 +1803,12 @@ const deleteUserCollection = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
+    return res.status(200).json({
+      status: "500",
+      code: 500,
+      message: "Internal Server error !",
+
+    });
   }
 
 
@@ -2170,7 +2237,7 @@ const updateUserCollection = async (req, res) => {
         collection.collection_amount = updatedCollectionAmount;
         await collection.save();
         const isApproved = await UserApprovedCollection.find({
-          user: req.body.userrId,
+          user: req.body.userId,
         });
         if (isApproved.length === 0) {
           const AppoveColl = new UserApprovedCollection({
@@ -3744,6 +3811,9 @@ module.exports = {
   updateUserCollectionAmount,
   getApprovedCollections,
   getRejectedCollections,
+  deleteApprovedCollection,
+  deleteRejectedCollection,
+  
 
 
 
