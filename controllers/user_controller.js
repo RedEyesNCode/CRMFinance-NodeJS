@@ -2126,7 +2126,7 @@ async function getS3FileUrl(key) {
 //   return pdfBuffer;
 // }/////
 async function generatePDF(emiData) {
-  console.log(emiData);
+  // console.log(emiData);
   const { default: fetch } = await import("node-fetch");
 
  
@@ -2157,7 +2157,7 @@ async function generatePDF(emiData) {
     25 // height
   );
 
-  doc.setFontSize(14); // Increase font size
+  doc.setFontSize(12); // Increase font size
   doc.setFont("helvetica", "bold"); // Set font style to bold
   const text = "GS Finance & Leasing";
   const textWidth = doc.getTextWidth(text);
@@ -2167,17 +2167,34 @@ async function generatePDF(emiData) {
     18 // Position text below the logo
   );
   doc.text("Private Limited", 25, 24);
+   
+  let currentDate = new Date();
+
+// Define options for formatting the date and time in IST
+let options = {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: true
+};
+
+// Format the date and time in IST
+let formatter = new Intl.DateTimeFormat('en-IN', options);
+let formattedDateTime = formatter.format(currentDate);
 
   const tableData = [
     ["Customer Name", emiData.fullName],
     ["Loan ID", emiData.userId],
-    ["Collection Status", emiData.collection_status || emiData.status],
+    ["Collection Status", emiData.collection_status || 'PENDING'],
     ["EMI Amount", `INR ${emiData.collection_amount || 0}`],
-    ["Penalty", `INR ${emiData.customer_penalty || 0}`],
-    ["Location", emiData.collection_location || 'Location'],
+    ["Penalty", `INR ${emiData.customer_penalty || 0}`],  
     // Add other relevant rows here
   ];
-
+  
   // Table Generation with Adjustments
   doc.autoTable({
     head: [["Fields", "Data"]],
@@ -2185,11 +2202,12 @@ async function generatePDF(emiData) {
     startY: 35, // Adjust starting position
     styles: {
       font: "helvetica",
-      fontSize: 8, // Adjust font size
+      fontSize: 9, // Adjust font size
       halign: "left", // Align text to the left
       valign: "middle",
       cellPadding: 3, // Adjust cell padding
       overflow: "linebreak",
+      fontStyle: "bold"
     },
     headStyles: {
       fillColor: [220, 220, 220], // Change header background color
@@ -2202,7 +2220,9 @@ async function generatePDF(emiData) {
     },
     margin: { top: 0, right: 5, bottom: 0, left: 5 },
   });
-
+  doc.setFontSize(10)
+  doc.setFont("helvetica", "normal"); 
+  doc.text("Date :  " +formattedDateTime,8,117)
 
   // Center the Table
   const table = doc.lastAutoTable;
@@ -2211,8 +2231,8 @@ async function generatePDF(emiData) {
 
   const footerY = table.finalY + 20; // Adjust position below the table
   doc.setFontSize(10); // Adjust font size
-  doc.setFont("helvetica", "italic"); // Set font style to italic
-  doc.text("Collection Details: " + emiData.collection_location, 10, footerY);
+  doc.setFont("helvetica" ); // Set font style to italic
+  doc.text("Employee Signature : " + "____________", 10, footerY+10);
 //   doc.setFontSize(10); // Adjust font size
 //   doc.setFont("helvetica", "italic"); // Set font style to italic
 //   doc.text("Collection Details: " + emiData.collection_location, 10, footerY);
@@ -2225,7 +2245,6 @@ async function generatePDF(emiData) {
 
 const createUserCollection = async (req, res) => {
   try {
-    console.log(req.body);
     const user = await UserData.findById(req.body.userId);
     if (user != null) {
       uploadMiddleWare.single("file")(req, res, async (err) => {
