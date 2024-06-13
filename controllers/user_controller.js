@@ -1911,8 +1911,10 @@ const updateUserCollection = async (req, res) => {
           Number(req.body.approved_collection_amount);
         collection.collection_amount = updatedCollectionAmount;
         await collection.save();
-        const isApproved = await UserApprovedCollection.find({user : req.body.userrId});
-        if(isApproved.length === 0){
+        const isApproved = await UserApprovedCollection.find({
+          user: req.body.userrId,
+        });
+        if (isApproved.length === 0) {
           const AppoveColl = new UserApprovedCollection({
             user: req.body.userId,
             fullName: collection.fullName,
@@ -1933,53 +1935,52 @@ const updateUserCollection = async (req, res) => {
             code: 200,
             message: "You have approved the employee collection",
             data: collection,
-            approveData : AppoveColl
+            approveData: AppoveColl,
           });
-        }else{
+        } else {
           res.status(200).json({
             status: "success",
             code: 200,
             message: "You have approved the employee collection",
             data: collection,
-            approveData : isApproved
+            approveData: isApproved,
           });
         }
-        
-       
-        
       } else {
         collection.collection_status = req.body.status;
         await collection.save();
-        const isRejected = await UserRejectedCollection.find({user : req.body.userrId});
-        if(isRejected.length === 0){
-        const RejectedColl = new UserRejectedCollection({
-          user: req.body.userId,
-          fullName: collection.fullName,
-          customer_name: collection.customer_name,
-          customer_mobile: collection.customer_mobile,
-          customer_penalty: collection.customer_penalty,
-          customer_emi_id: collection.customer_emi_id,
-          customer_loan_id: collection.customer_loan_id,
-          collection_amount: collection.collection_amount,
-          collection_location: collection.collection_location,
-          collection_address: collection.collection_address,
-          collection_status: collection.collection_status,
-          generated_emi_bill: collection.generated_emi_bill,
+        const isRejected = await UserRejectedCollection.find({
+          user: req.body.userrId,
         });
-        await RejectedColl.save();
-        res.status(200).json({
-          status: "success",
-          code: 200,
-          message: "You have rejected the employee collection",
-          RejectedData : RejectedColl
-        });}else{
+        if (isRejected.length === 0) {
+          const RejectedColl = new UserRejectedCollection({
+            user: req.body.userId,
+            fullName: collection.fullName,
+            customer_name: collection.customer_name,
+            customer_mobile: collection.customer_mobile,
+            customer_penalty: collection.customer_penalty,
+            customer_emi_id: collection.customer_emi_id,
+            customer_loan_id: collection.customer_loan_id,
+            collection_amount: collection.collection_amount,
+            collection_location: collection.collection_location,
+            collection_address: collection.collection_address,
+            collection_status: collection.collection_status,
+            generated_emi_bill: collection.generated_emi_bill,
+          });
+          await RejectedColl.save();
           res.status(200).json({
             status: "success",
             code: 200,
             message: "You have rejected the employee collection",
-            RejectedData : isRejected
+            RejectedData: RejectedColl,
           });
-        
+        } else {
+          res.status(200).json({
+            status: "success",
+            code: 200,
+            message: "You have rejected the employee collection",
+            RejectedData: isRejected,
+          });
         }
       }
     } else {
@@ -2129,8 +2130,6 @@ async function generatePDF(emiData) {
   // console.log(emiData);
   const { default: fetch } = await import("node-fetch");
 
- 
-
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
@@ -2167,34 +2166,29 @@ async function generatePDF(emiData) {
     18 // Position text below the logo
   );
   doc.text("Private Limited", 25, 24);
-   
   let currentDate = new Date();
-
-// Define options for formatting the date and time in IST
-let options = {
-    timeZone: 'Asia/Kolkata',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    second: 'numeric',
-    hour12: true
-};
-
-// Format the date and time in IST
-let formatter = new Intl.DateTimeFormat('en-IN', options);
-let formattedDateTime = formatter.format(currentDate);
+  let options = {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+    hour12: true,
+  };
+  let formatter = new Intl.DateTimeFormat("en-IN", options);
+  let formattedDateTime = formatter.format(currentDate);
 
   const tableData = [
     ["Customer Name", emiData.fullName],
     ["Loan ID", emiData.userId],
-    ["Collection Status", emiData.collection_status || 'PENDING'],
+    ["Collection Status", emiData.collection_status || "PENDING"],
     ["EMI Amount", `INR ${emiData.collection_amount || 0}`],
-    ["Penalty", `INR ${emiData.customer_penalty || 0}`],  
+    ["Penalty", `INR ${emiData.customer_penalty || 0}`],
     // Add other relevant rows here
   ];
-  
+
   // Table Generation with Adjustments
   doc.autoTable({
     head: [["Fields", "Data"]],
@@ -2207,7 +2201,7 @@ let formattedDateTime = formatter.format(currentDate);
       valign: "middle",
       cellPadding: 3, // Adjust cell padding
       overflow: "linebreak",
-      fontStyle: "bold"
+      fontStyle: "bold",
     },
     headStyles: {
       fillColor: [220, 220, 220], // Change header background color
@@ -2220,9 +2214,9 @@ let formattedDateTime = formatter.format(currentDate);
     },
     margin: { top: 0, right: 5, bottom: 0, left: 5 },
   });
-  doc.setFontSize(10)
-  doc.setFont("helvetica", "normal"); 
-  doc.text("Date :  " +formattedDateTime,8,117)
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text("Date :  " + formattedDateTime, 8, 117);
 
   // Center the Table
   const table = doc.lastAutoTable;
@@ -2231,16 +2225,14 @@ let formattedDateTime = formatter.format(currentDate);
 
   const footerY = table.finalY + 20; // Adjust position below the table
   doc.setFontSize(10); // Adjust font size
-  doc.setFont("helvetica" ); // Set font style to italic
-  doc.text("Employee Signature : " + "____________", 10, footerY+10);
-//   doc.setFontSize(10); // Adjust font size
-//   doc.setFont("helvetica", "italic"); // Set font style to italic
-//   doc.text("Collection Details: " + emiData.collection_location, 10, footerY);
-
+  doc.setFont("helvetica"); // Set font style to italic
+  doc.text("Employee Signature : " + "____________", 10, footerY + 10);
+  //   doc.setFontSize(10); // Adjust font size
+  //   doc.setFont("helvetica", "italic"); // Set font style to italic
+  //   doc.text("Collection Details: " + emiData.collection_location, 10, footerY);
 
   const pdfBuffer = doc.output("arraybuffer");
   return pdfBuffer;
-  
 }
 
 const createUserCollection = async (req, res) => {
@@ -2273,13 +2265,15 @@ const createUserCollection = async (req, res) => {
               Key: s3Key,
               Body: pdfBuffer,
               ContentType: "application/pdf",
+              ACL: "public-read",
             })
           );
+          const publicUrl = `https://androidbucket3577.s3.ap-south-1.amazonaws.com/${s3Key}`;
           // Get the S3 URL
-          const s3Url = await getS3FileUrl(s3Key);
+          // const s3Url = await getS3FileUrl(s3Key);
 
           // Update the collection with the S3 URL
-          newUserCollection.generated_emi_bill = s3Url;
+          newUserCollection.generated_emi_bill = publicUrl;
           await newUserCollection.save();
           // ... rest of your code
           res.status(200).json({
