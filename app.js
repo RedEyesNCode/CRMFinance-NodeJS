@@ -56,12 +56,13 @@ app.post('/create-user-collection',user.createUserCollection);
 app.post('/get-user-collection',user.getUserCollection);
 app.get('/get-users-with-collection',user.getAllUserTotalAmount);
 app.post('/update-user-collection',user.updateUserCollection);
+app.post('/update-user-collection-amount',user.updateUserCollectionAmount)
 app.post('/delete-user-collection',user.deleteUserCollection);
 
 
 app.get('/get-admin-dashboard',user.getAdminDashboard);
 
-
+app.post('/get-user-current-month-leads',user.getCurrentMonthLeadsUser);
 
 app.post('/create-lead-card',user.createLeadCard);
 app.post('/delete-lead-card',user.deleteLeadCard);

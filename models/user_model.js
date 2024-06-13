@@ -10,7 +10,8 @@ const DataSchema = new mongoose.Schema({
     employeeId: { type: String, default: "" },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
-    mpass: { type: String, default: "" } 
+    mpass: { type: String, default: "" },
+    totalCollectionAmount : {type:String, default : "0"} 
 });
 
 // Create the Mongoose model

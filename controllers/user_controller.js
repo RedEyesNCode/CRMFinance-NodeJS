@@ -1605,6 +1605,50 @@ const getLeadEmi = async (req, res) => {
       .json({ code: 500, status: "fail", message: "Internal server error" });
   }
 };
+
+const getCurrentMonthLeadsUser = async (req, res) => {
+  try {
+      const userId = req.body.userId; // Assuming you send userId in the request body
+
+      // Get the start and end dates for the current month
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+      // Fetch leads using Mongoose query
+      const leads = await UserLead.find({
+          user: userId,
+          createdAt: {
+              $gte: startOfMonth, 
+              $lt: endOfMonth
+          }
+      });
+      if(leads.length===0){
+        return res.status(200).json({
+          code: 400,
+          status: "fail",
+          message: "No Leads Found for given user",
+      });
+      }else{
+        return res.status(200).json({
+          code: 200,
+          status: "success",
+          message: "Current month's leads fetched successfully",
+          data: leads
+      });
+      }
+
+      
+  } catch (error) {
+      console.error(error);
+      return res.status(500).json({
+          code: 500,
+          status: "fail",
+          message: "Internal server error",
+          error: error.message // Send only the error message for security
+      });
+  }
+};
 // controller function to get-lead-by-id
 const getLeadDetails = async (req, res) => {
   try {
@@ -2035,6 +2079,54 @@ const getLeadsByDateAndStatusName = async (req, res) => {
     });
   }
 };
+
+const updateUserCollectionAmount = async (req,res) => {
+
+  try{
+    console.log(req.body);
+    const user = await UserData.findById(req.body.userId);
+    if(user){
+      const totalCollectionAmount = Number(user.totalCollectionAmount);
+      if(totalCollectionAmount>=req.body.collection_amount){
+        user.totalCollectionAmount = totalCollectionAmount - Number(req.body.collection_amount);
+        await user.save();
+        
+        return res.status(200).json({
+          status: "success",
+          code: 200,
+          message: "Total Collection Amount of Employee is Updated !",
+        });
+      }else{
+        return res.status(200).json({
+          status: "fail",
+          code: 400,
+          message: "New Amount Exceeds Total Collection Amount",
+        });
+      }
+
+    }else{
+      return res.status(200).json({
+        status: "Success",
+        code: 400,
+        message: "No User found",
+      });
+    }
+
+  }catch(error){
+    console.log(error);
+    return res.status(200).json({
+      status: "fail",
+      code: 500,
+      message: "Internal Server Error",
+      error : error,
+    });
+  }
+
+
+
+}
+
+
 const updateUserCollection = async (req, res) => {
   try {
     console.log(req.body);
@@ -2365,7 +2457,11 @@ const createUserCollection = async (req, res) => {
   try {
     console.log(req.body);
     const user = await UserData.findById(req.body.userId);
+    
     if (user != null) {
+      user.totalCollectionAmount = Number(user.totalCollectionAmount)+ Number(req.body.collection_amount)
+      await user.save();
+      
       uploadMiddleWare.single("file")(req, res, async (err) => {
         if (err) {
           // ... (your error handling for file upload errors)
@@ -2378,6 +2474,8 @@ const createUserCollection = async (req, res) => {
         } else {
           // ... (your existing code to find the user and save the newUserCollection)
           const newUserCollection = new UserCollection(req.body);
+          
+
           newUserCollection.user = req.body.userId;
           newUserCollection.generated_emi_bill = "";
           await newUserCollection.save();
@@ -3595,6 +3693,10 @@ module.exports = {
   deleteLeadCard,
   getAllLeadCards,
   getAdminDashboard,
+  getCurrentMonthLeadsUser,
+  updateUserCollectionAmount,
+
+
 
 
 
