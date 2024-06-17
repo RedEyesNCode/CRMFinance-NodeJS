@@ -1287,6 +1287,14 @@ const updateLeadStatus = async (req, res) => {
     const { leadId, status, amount, feesAmount, interestRate } = req.body;
 
     const userLead = await UserLead.findById(leadId);
+    const newStatusEntry = {
+      leadStatus: status,
+      createdAt: new Date()
+  };
+    userLead.leadStatusHistory.push(newStatusEntry);
+    await userLead.save();
+    
+
     if (userLead) {
       if (status === "APPROVED") {
         userLead.lead_status = status;

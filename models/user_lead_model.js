@@ -45,6 +45,13 @@ const UserLeadSchema = new mongoose.Schema({
     empApproveAmount: { type: String, default: "" },
     lead_status : {type: String,enum : ['EMPTY','PENDING','APPROVED','REJECTED','DISBURSED'],default : 'PENDING'},
 
+  leadStatusHistory: [
+    {
+      leadStatus: String,
+      createdAt: Date,
+      default : []
+    }
+  ],
     dateOfBirth: { 
         type:String,
         default : ""
