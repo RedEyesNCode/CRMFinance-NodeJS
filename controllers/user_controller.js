@@ -23,10 +23,11 @@ const { jsPDF } = require("jspdf");
 const { autoTable } = require("jspdf-autotable");
 const fetch = require("node-fetch-cjs");
 
-const { GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3'); // Import for S3 GetObjectCommand
-const { S3Client } = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");  // Import getSignedUrl
+const { GetObjectCommand, PutObjectCommand } = require("@aws-sdk/client-s3"); // Import for S3 GetObjectCommand
+const { S3Client } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner"); // Import getSignedUrl
 const UserApprovedCollection = require("../models/user_collection_Approve");
+const { Console } = require("console");
 
 function makeid(length) {
   let result = "";
@@ -239,79 +240,91 @@ const deleteUser = async (req, res) => {
   }
 };
 const getApprovedCollections = async (req, res) => {
-  try{
-    const allUsers = await UserApprovedCollection.find().sort({ createdAt: -1 });
-    return res
-    .status(200)
-    .json({ code: "200", status: "success", message: "All Approved Collections",data : allUsers });
-  }catch(error){
+  try {
+    const allUsers = await UserApprovedCollection.find().sort({
+      createdAt: -1,
+    });
+    return res.status(200).json({
+      code: "200",
+      status: "success",
+      message: "All Approved Collections",
+      data: allUsers,
+    });
+  } catch (error) {
     console.log(error);
-    res.status(200).json({status : 'fail',code : 500, message: "Internal Server Error" });
-
+    res
+      .status(200)
+      .json({ status: "fail", code: 500, message: "Internal Server Error" });
   }
-
-}
+};
 const getRejectedCollections = async (req, res) => {
-  try{
-    const allUsers = await UserRejectedCollection.find().sort({ createdAt: -1 });
-    return res
-    .status(200)
-    .json({ code: "200", status: "success", message: "All Rejected Collections",data : allUsers });
-  }catch(error){
+  try {
+    const allUsers = await UserRejectedCollection.find().sort({
+      createdAt: -1,
+    });
+    return res.status(200).json({
+      code: "200",
+      status: "success",
+      message: "All Rejected Collections",
+      data: allUsers,
+    });
+  } catch (error) {
     console.log(error);
-    res.status(200).json({status : 'fail',code : 500, message: "Internal Server Error" });
-
+    res
+      .status(200)
+      .json({ status: "fail", code: 500, message: "Internal Server Error" });
   }
-
-}
-const getAllLeadCards = async (req,res) => {
-
-  try{
+};
+const getAllLeadCards = async (req, res) => {
+  try {
     const allUsers = await LeadCardModel.find().sort({ createdAt: -1 });
-    return res
-    .status(200)
-    .json({ code: "200", status: "success", message: "All Lead Card Templates ",data : allUsers });
-  }catch(error){
+    return res.status(200).json({
+      code: "200",
+      status: "success",
+      message: "All Lead Card Templates ",
+      data: allUsers,
+    });
+  } catch (error) {
     console.log(error);
-    res.status(200).json({status : 'fail',code : 500, message: "Internal Server Error" });
-
+    res
+      .status(200)
+      .json({ status: "fail", code: 500, message: "Internal Server Error" });
   }
+};
 
-
-}
-
-const createLeadCard = async (req,res) => {
-  try{
-    const {telephoneNumber, pancard, aadhar_card,remarks } = req.body; // Get lead data from the request body
+const createLeadCard = async (req, res) => {
+  try {
+    const { telephoneNumber, pancard, aadhar_card, remarks } = req.body; // Get lead data from the request body
     const existingLead = await LeadCardModel.find({
       telephoneNumber: telephoneNumber,
       pancard: pancard,
       aadhar_card: aadhar_card,
     });
     if (existingLead.length != 0) {
-      return res
-        .status(200)
-        .json({ code: "200", status: "fail", message: "Lead Template Already Exists" });
+      return res.status(200).json({
+        code: "200",
+        status: "fail",
+        message: "Lead Template Already Exists",
+      });
     }
     const newLeadCard = new LeadCardModel(req.body);
     const saved = await newLeadCard.save();
-    return res
-        .status(200)
-        .json({ code: "200", status: "success", message: "Created Lead Template Successfully !",data : saved });
-
-
-  }catch(error){
+    return res.status(200).json({
+      code: "200",
+      status: "success",
+      message: "Created Lead Template Successfully !",
+      data: saved,
+    });
+  } catch (error) {
     console.log(error);
-    res.status(200).json({status : 'fail',code : 500, message: "Internal Server Error" });
-
-
+    res
+      .status(200)
+      .json({ status: "fail", code: 500, message: "Internal Server Error" });
   }
+};
 
-
-}
-
-const getAdminDashboard = async (req,res) => {
-  try{
+const getAdminDashboard = async (req, res) => {
+  try {
     const totalEmployees = await UserData.countDocuments();
     const totalVisits = await UserVisit.countDocuments();
     const totalAttendance = await UserAttendance.countDocuments();
@@ -319,38 +332,38 @@ const getAdminDashboard = async (req,res) => {
     const totalLeads = await UserLead.countDocuments();
     const lastestLead = await UserLead.find().sort({ createdAt: -1 });
     const lastestVist = await UserVisit.find().sort({ createdAt: -1 });
-    const lastestCollection = await UserCollection.find().sort({ createdAt: -1 });
-    const lastestAttendance = await UserAttendance.find().sort({ createdAt: -1 });
+    const lastestCollection = await UserCollection.find().sort({
+      createdAt: -1,
+    });
+    const lastestAttendance = await UserAttendance.find().sort({
+      createdAt: -1,
+    });
     const latestUserEntry = await UserData.find().sort({ createdAt: -1 });
     const responseJson = {
-      totalEmployees : totalEmployees,
-      totalVisits : totalVisits,
-      totalAttendance : totalAttendance,
-      totalCollections : totalCollections,
-      totalLeads : totalLeads,
-      latestLeadEntry : lastestLead[0],
-      latestVisitEntry : lastestVist[0],
-      latestCollectionEntry : lastestCollection[0],
-      latestAttendanceEntry : lastestAttendance[0],
-      latestUserEntry : latestUserEntry[0]
-
-
-
+      totalEmployees: totalEmployees,
+      totalVisits: totalVisits,
+      totalAttendance: totalAttendance,
+      totalCollections: totalCollections,
+      totalLeads: totalLeads,
+      latestLeadEntry: lastestLead[0],
+      latestVisitEntry: lastestVist[0],
+      latestCollectionEntry: lastestCollection[0],
+      latestAttendanceEntry: lastestAttendance[0],
+      latestUserEntry: latestUserEntry[0],
     };
-    return res
-        .status(200)
-        .json({ code: "200", status: "success", message: "Admin Dashboard !",data : responseJson });
-
-    
-
-  }catch(error){
+    return res.status(200).json({
+      code: "200",
+      status: "success",
+      message: "Admin Dashboard !",
+      data: responseJson,
+    });
+  } catch (error) {
     console.log(error);
-    res.status(200).json({status : 'fail',code : 500, message: "Internal Server Error" });
-
+    res
+      .status(200)
+      .json({ status: "fail", code: 500, message: "Internal Server Error" });
   }
-
-
-}
+};
 
 // controller function to get-all-users-with-total-collection amount
 const getAllUserTotalAmount = async (req, res) => {
@@ -1289,11 +1302,10 @@ const updateLeadStatus = async (req, res) => {
     const userLead = await UserLead.findById(leadId);
     const newStatusEntry = {
       leadStatus: status,
-      createdAt: new Date()
-  };
+      createdAt: new Date(),
+    };
     userLead.leadStatusHistory.push(newStatusEntry);
     await userLead.save();
-    
 
     if (userLead) {
       if (status === "APPROVED") {
@@ -1644,45 +1656,43 @@ const getLeadEmi = async (req, res) => {
 
 const getCurrentMonthLeadsUser = async (req, res) => {
   try {
-      const userId = req.body.userId; // Assuming you send userId in the request body
+    const userId = req.body.userId; // Assuming you send userId in the request body
 
-      // Get the start and end dates for the current month
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    // Get the start and end dates for the current month
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-      // Fetch leads using Mongoose query
-      const leads = await UserLead.find({
-          user: userId,
-          createdAt: {
-              $gte: startOfMonth, 
-              $lt: endOfMonth
-          }
+    // Fetch leads using Mongoose query
+    const leads = await UserLead.find({
+      user: userId,
+      createdAt: {
+        $gte: startOfMonth,
+        $lt: endOfMonth,
+      },
+    });
+    if (leads.length === 0) {
+      return res.status(200).json({
+        code: 400,
+        status: "fail",
+        message: "No Leads Found for given user",
       });
-      if(leads.length===0){
-        return res.status(200).json({
-          code: 400,
-          status: "fail",
-          message: "No Leads Found for given user",
+    } else {
+      return res.status(200).json({
+        code: 200,
+        status: "success",
+        message: "Current month's leads fetched successfully",
+        data: leads,
       });
-      }else{
-        return res.status(200).json({
-          code: 200,
-          status: "success",
-          message: "Current month's leads fetched successfully",
-          data: leads
-      });
-      }
-
-      
+    }
   } catch (error) {
-      console.error(error);
-      return res.status(500).json({
-          code: 500,
-          status: "fail",
-          message: "Internal server error",
-          error: error.message // Send only the error message for security
-      });
+    console.error(error);
+    return res.status(500).json({
+      code: 500,
+      status: "fail",
+      message: "Internal server error",
+      error: error.message, // Send only the error message for security
+    });
   }
 };
 // controller function to get-lead-by-id
@@ -1732,10 +1742,11 @@ const getLoanApprovalDetails = async (req, res) => {
   }
 };
 
-const deleteRejectedCollection = async (req,res) => {
-
-  try{
-    const collection = await UserRejectedCollection.findById(req.body.collection_id);
+const deleteRejectedCollection = async (req, res) => {
+  try {
+    const collection = await UserRejectedCollection.findById(
+      req.body.collection_id
+    );
     if (collection) {
       await collection.deleteOne();
       return res.status(200).json({
@@ -1750,8 +1761,7 @@ const deleteRejectedCollection = async (req,res) => {
         message: "Collection Not Found !",
       });
     }
-
-  }catch(error){
+  } catch (error) {
     console.log(error);
     return res.status(200).json({
       status: "fail",
@@ -1759,14 +1769,13 @@ const deleteRejectedCollection = async (req,res) => {
       message: error,
     });
   }
+};
 
-
-
-}
-
-const deleteApprovedCollection = async (req,res) => {
-  try{
-    const collection = await UserApprovedCollection.findById(req.body.collection_id);
+const deleteApprovedCollection = async (req, res) => {
+  try {
+    const collection = await UserApprovedCollection.findById(
+      req.body.collection_id
+    );
     if (collection) {
       await collection.deleteOne();
       return res.status(200).json({
@@ -1781,16 +1790,10 @@ const deleteApprovedCollection = async (req,res) => {
         message: "Collection Not Found !",
       });
     }
-
-  }catch(error){
+  } catch (error) {
     console.log(error);
-
   }
-
-
-
-}
-
+};
 
 const deleteUserCollection = async (req, res) => {
   try {
@@ -1815,16 +1818,12 @@ const deleteUserCollection = async (req, res) => {
       status: "500",
       code: 500,
       message: "Internal Server error !",
-
     });
   }
-
-
-}
-const deleteLeadCard = async(req,res) => {
-
-  try{
-    const {leadCardId} = req.body;
+};
+const deleteLeadCard = async (req, res) => {
+  try {
+    const { leadCardId } = req.body;
     const userLead = await LeadCardModel.findByIdAndDelete(leadCardId);
     saveToRecycleBin(JSON.stringify(userLead), "LEAD_CARD");
 
@@ -1839,25 +1838,19 @@ const deleteLeadCard = async(req,res) => {
         .status(200)
         .json({ status: "fail", code: 400, message: "No Lead Card found !" });
     }
-
-  }catch(error){
+  } catch (error) {
     console.log(error);
-    res.status(200).json({status : 'fail',code : 500, message: "Internal Server Error" });
-
+    res
+      .status(200)
+      .json({ status: "fail", code: 500, message: "Internal Server Error" });
   }
-}
-
-
-
-
-
+};
 
 // controller function to create-lead
 
 const createLead = async (req, res) => {
   try {
     const { userId, mobileNumber, pancard, aadhar_card } = req.body; // Get lead data from the request body
-    console.log(req.body);
     const leadCount = await UserLead.find();
 
     // Check if userId is valid
@@ -1884,9 +1877,11 @@ const createLead = async (req, res) => {
         .json({ code: "200", status: "fail", error: "Lead Already Exists" });
     }
     if (existingLeadCard.length != 0) {
-      return res
-        .status(200)
-        .json({ code: "200", status: "fail", error: "Lead Card Already Exists" });
+      return res.status(200).json({
+        code: "200",
+        status: "fail",
+        error: "Lead Card Already Exists",
+      });
     }
 
     // Create a new UserLead document
@@ -2066,7 +2061,7 @@ const searchUserLeadsByStatus = async (req, res) => {
   try {
     const { fromDate, toDate, lead_status, userId } = req.body;
     // Input Validation (Optional but recommended)
-    
+
     if (!userId) {
       return res.status(400).json({ error: "userId is required" });
     }
@@ -2091,17 +2086,14 @@ const searchUserLeadsByStatus = async (req, res) => {
         $lte: to,
       },
     };
-    if(toDate.length===0 || fromDate.length===0){
+    if (toDate.length === 0 || fromDate.length === 0) {
       query = {
         user: userId,
-        lead_status : lead_status
-      }
-
+        lead_status: lead_status,
+      };
     }
 
-
-    
-    if (lead_status.length!=0) {
+    if (lead_status.length != 0) {
       query.lead_status = lead_status;
     }
     // Execute the query
@@ -2130,7 +2122,6 @@ const searchUserLeadsByStatus = async (req, res) => {
 };
 ///Changes by rishi
 const getLeadsByDateAndStatusName = async (req, res) => {
-  console.log(req.body);
   try {
     const { fromDate, toDate, lead_status, firstName } = req.body;
     // Parse the dates from YYYY-MM-DD format
@@ -2183,15 +2174,14 @@ const getLeadsByDateAndStatusName = async (req, res) => {
   }
 };
 
-const updateUserCollectionAmount = async (req,res) => {
-
-  try{
-    console.log(req.body);
+const updateUserCollectionAmount = async (req, res) => {
+  try {
     const user = await UserData.findById(req.body.userId);
-    if(user){
+    if (user) {
       const totalCollectionAmount = Number(user.totalCollectionAmount);
-      if(totalCollectionAmount>=req.body.collection_amount){
-        user.totalCollectionAmount = totalCollectionAmount - Number(req.body.collection_amount);
+      if (totalCollectionAmount >= req.body.collection_amount) {
+        user.totalCollectionAmount =
+          totalCollectionAmount - Number(req.body.collection_amount);
         await user.save();
 
         return res.status(200).json({
@@ -2199,40 +2189,33 @@ const updateUserCollectionAmount = async (req,res) => {
           code: 200,
           message: "Total Collection Amount of Employee is Updated !",
         });
-      }else{
+      } else {
         return res.status(200).json({
           status: "fail",
           code: 400,
           message: "New Amount Exceeds Total Collection Amount",
         });
       }
-
-    }else{
+    } else {
       return res.status(200).json({
         status: "Success",
         code: 400,
         message: "No User found",
       });
     }
-
-  }catch(error){
+  } catch (error) {
     console.log(error);
     return res.status(200).json({
       status: "fail",
       code: 500,
       message: "Internal Server Error",
-      error : error,
+      error: error,
     });
   }
-
-
-
-}
-
+};
 
 const updateUserCollection = async (req, res) => {
   try {
-    console.log(req.body);
     const collection = await UserCollection.findById(req.body.collection_id);
 
     if (collection) {
@@ -2329,7 +2312,7 @@ const updateUserCollection = async (req, res) => {
       status: "fail",
       code: 500,
       message: "Internal Server Error",
-      error : error
+      error: error,
     });
   }
 };
@@ -2577,11 +2560,12 @@ async function generatePDF(emiData) {
 const createUserCollection = async (req, res) => {
   try {
     const user = await UserData.findById(req.body.userId);
-    
+
     if (user != null) {
-      user.totalCollectionAmount = Number(user.totalCollectionAmount)+ Number(req.body.collection_amount)
+      user.totalCollectionAmount =
+        Number(user.totalCollectionAmount) + Number(req.body.collection_amount);
       await user.save();
-      
+
       uploadMiddleWare.single("file")(req, res, async (err) => {
         if (err) {
           // ... (your error handling for file upload errors)
@@ -2594,7 +2578,6 @@ const createUserCollection = async (req, res) => {
         } else {
           // ... (your existing code to find the user and save the newUserCollection)
           const newUserCollection = new UserCollection(req.body);
-          
 
           newUserCollection.user = req.body.userId;
           newUserCollection.generated_emi_bill = "";
@@ -3169,15 +3152,28 @@ const getClosedLeadsByMonth = async (req, res) => {
 //////////////////////////////////////////////////
 const getAllUserLeads = async (req, res) => {
   try {
-    const userLead = await UserLead.find({ user: req.body.userId }).sort({
-      createdAt: -1,
-    });
+    console.log(req.body);
+    const page = parseInt(req.body.page) || 1;
+    const limit = parseInt(req.body.limit) || 100;
+
+    const skip = (page - 1) * limit;
+
+    const userLead = await UserLead.find({ user: req.body.userId })
+      .sort({ createdAt: -1 })
+      .skip(skip) // Apply skip to exclude previous results
+      .limit(limit);
+
+    const totalLeads = await UserLead.countDocuments();
+
     if (userLead.length != 0) {
       return res.status(200).json({
         status: "success",
         code: 200,
         message: "User Leads Fetched successfully !",
         data: userLead,
+        currentPage: page,
+        totalCount: totalLeads,
+        totalPages: Math.ceil(totalLeads / limit),
       });
     } else {
       return res
@@ -3821,11 +3817,4 @@ module.exports = {
   getRejectedCollections,
   deleteApprovedCollection,
   deleteRejectedCollection,
-  
-
-
-
-
-
-
 };
