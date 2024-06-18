@@ -3152,7 +3152,6 @@ const getClosedLeadsByMonth = async (req, res) => {
 //////////////////////////////////////////////////
 const getAllUserLeads = async (req, res) => {
   try {
-    console.log(req.body);
     const page = parseInt(req.body.page) || 1;
     const limit = parseInt(req.body.limit) || 100;
 
@@ -3163,7 +3162,7 @@ const getAllUserLeads = async (req, res) => {
       .skip(skip) // Apply skip to exclude previous results
       .limit(limit);
 
-    const totalLeads = await UserLead.countDocuments();
+    const totalLeads = await UserLead.countDocuments({ user: req.body.userId });
 
     if (userLead.length != 0) {
       return res.status(200).json({
