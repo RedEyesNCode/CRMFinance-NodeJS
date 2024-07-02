@@ -1608,6 +1608,27 @@ const getClosedLoanDetails = async (req, res) => {
 const getLeadEmi = async (req, res) => {
   try {
     const { leadId, emi_tenure } = req.body;
+    if (leadId.toString() === "-1") {
+      const { leadAmount, lead_interest_rate } = req.body;
+      const P = parseFloat(leadAmount);
+      const R = parseFloat(lead_interest_rate) / 100 / 12; // Monthly interest rate
+      const N = parseFloat(emi_tenure);
+
+      // Flat EMI Calculation
+      const monthlyInterest = P * R;
+      const totalInterest = monthlyInterest * N;
+      const EMI = (P + totalInterest) / N;
+      const totalAmount = EMI * N;
+      return res.status(200).json({
+        code: 200,
+        status: "success",
+        message: "Emi Details",
+        monthly_interest: monthlyInterest,
+        total_interest: totalInterest,
+        emi_amount: EMI,
+        total_amount: totalAmount,
+      });
+    }
     const lead = await UserLead.findById(leadId);
     if (lead) {
       const P = parseFloat(lead.leadAmount);
@@ -1619,8 +1640,6 @@ const getLeadEmi = async (req, res) => {
       const totalInterest = monthlyInterest * N;
       const EMI = (P + totalInterest) / N;
       const totalAmount = EMI * N;
-      console.log(req.body);
-
       return res.status(200).json({
         code: 200,
         status: "success",
